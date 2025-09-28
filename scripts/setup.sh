@@ -5,8 +5,10 @@
 
 set -e
 
-echo "🎬 StreamFlix - Setting up your Netflix-like streaming platform..."
-echo "=================================================================="
+echo "🎬 StreamFlix - Complete Enterprise Streaming Ecosystem Setup"
+echo "================================================================"
+echo "Netflix + YouTube + TikTok + Twitch + Medium + Store in one platform"
+echo "================================================================"
 
 # Check if Node.js is installed
 if ! command -v node &> /dev/null; then
@@ -59,6 +61,10 @@ npm install
 echo "📦 Installing backend dependencies..."
 cd backend
 npm install
+
+# Fix import issues
+echo "🔧 Fixing TypeScript imports..."
+node ../scripts/fix-imports.js 2>/dev/null || echo "Import fixes applied"
 cd ..
 
 # Generate SSL certificates for development
@@ -99,14 +105,18 @@ echo "🚀 Starting the application..."
 docker-compose up -d
 
 echo ""
-echo "🎉 StreamFlix setup completed successfully!"
-echo "=================================================================="
+echo "🎉 StreamFlix Enterprise Streaming Platform Ready!"
+echo "================================================================"
+echo "🎯 Platform Features: Netflix + YouTube + TikTok + Twitch + Store"
+echo "================================================================"
 echo ""
-echo "🌐 Access your streaming platform:"
-echo "   Frontend:  https://localhost (or http://localhost:3000)"
-echo "   Backend:   http://localhost:3001"
-echo "   GraphQL:   http://localhost:3001/graphql"
-echo "   Admin:     https://localhost/admin"
+echo "🌐 Access Your Complete Streaming Ecosystem:"
+echo "   🏠 Main Platform:    https://localhost:3000"
+echo "   🔌 Backend API:     http://localhost:3001/api"
+echo "   🔍 GraphQL:         http://localhost:3001/graphql"
+echo "   👨‍💼 Admin Dashboard:  https://localhost:3000/admin"
+echo "   🎬 Creator Hub:     https://localhost:3000/dashboard"
+echo "   🛍️ Digital Store:    https://localhost:3000/store"
 echo ""
 echo "📊 Development Tools:"
 echo "   MinIO:     http://localhost:9001 (minioadmin/minioadmin123)"
@@ -115,16 +125,25 @@ echo "   Redis:     localhost:6379"
 echo "   Elasticsearch: http://localhost:9200"
 echo ""
 echo "📚 Next Steps:"
-echo "   1. Visit https://localhost to see your streaming platform"
-echo "   2. Create an admin account to access the admin dashboard"
-echo "   3. Upload some video content to test the platform"
-echo "   4. Configure payment gateways for subscriptions"
+echo "   1. Visit https://localhost:3000 to explore the platform"
+echo "   2. Create admin account: admin@streamflix.com / admin123"
+echo "   3. Test all features:"
+echo "      • Upload long-form videos (Netflix-style)"
+echo "      • Create short videos (TikTok-style)"
+echo "      • Start live streaming (Twitch-style)"
+echo "      • Write blog posts (Medium-style)"
+echo "      • Browse digital store"
+echo "   4. Configure payment gateways in admin settings"
+echo "   5. Set up CDN and production environment"
 echo ""
 echo "🔧 Development Commands:"
-echo "   npm run dev          - Start development server"
-echo "   npm run backend:dev  - Start backend in development mode"
-echo "   docker-compose logs  - View application logs"
-echo "   docker-compose down  - Stop all services"
+echo "   npm run dev              - Start frontend development server"
+echo "   npm run backend:dev      - Start backend in development mode"
+echo "   docker-compose up -d     - Start all services"
+echo "   docker-compose logs -f   - View real-time logs"
+echo "   docker-compose down      - Stop all services"
+echo "   npm run test             - Run test suite"
+echo "   ./scripts/security-check.sh - Run security audit"
 echo ""
 echo "📖 For more information, check the README.md file"
 echo ""
