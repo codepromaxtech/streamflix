@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: streamflix-config
+  namespace: streamflix
+data:
+  NODE_ENV: "production"
+  REDIS_URL: "redis://redis-service:6379"
+  ELASTICSEARCH_URL: "http://elasticsearch-service:9200"
+  NEXT_PUBLIC_API_URL: "https://api.streamflix.com"
+  NEXT_PUBLIC_GRAPHQL_URL: "https://api.streamflix.com/graphql"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: streamflix-secrets
+  namespace: streamflix
+type: Opaque
+stringData:
+  DATABASE_URL: "postgresql://username:password@postgres-service:5432/streaming_platform"
+  JWT_SECRET: "your-super-secret-jwt-key-change-in-production"
+  STRIPE_SECRET_KEY: "sk_live_your-stripe-secret-key"
+  SSLCOMMERZ_STORE_ID: "your-sslcommerz-store-id"
+  SSLCOMMERZ_STORE_PASSWORD: "your-sslcommerz-password"
+  AWS_ACCESS_KEY_ID: "your-aws-access-key"
+  AWS_SECRET_ACCESS_KEY: "your-aws-secret-key"
+  AWS_S3_BUCKET: "streamflix-videos-prod"
