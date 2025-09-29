@@ -3,6 +3,7 @@ export interface User {
   email: string
   name: string
   avatar?: string
+  role: 'USER' | 'ADMIN' | 'MODERATOR'
   subscription: SubscriptionPlan
   watchHistory: WatchHistoryItem[]
   favorites: string[]

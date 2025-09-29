@@ -3,12 +3,16 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Search, Filter, X, ChevronDown } from 'lucide-react'
+
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ContentCard } from '@/components/content-card'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { debounce } from '@/lib/utils'
+
+// Force dynamic rendering for this page
+export const dynamic = 'force-dynamic'
 
 interface SearchFilters {
   type: string[]
