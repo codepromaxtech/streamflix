@@ -1,14 +1,67 @@
 version: '3.8'
 
 services:
+  # Frontend Service
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: streaming_frontend
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://backend:4000
+      - NEXT_PUBLIC_GRAPHQL_URL=http://backend:4000/graphql
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    working_dir: /app
+    networks:
+      - streaming_network
+    depends_on:
+      - backend
+    restart: unless-stopped
+    command: npm run dev
+
+  # Backend Service
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: streaming_backend
+    environment:
+      - NODE_ENV=development
+      - PORT=4000
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-streaming}
+      - REDIS_URL=redis://redis:6379
+      - ELASTICSEARCH_NODE=http://elasticsearch:9200
+      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - ./uploads:/app/uploads
+    working_dir: /app
+    depends_on:
+      - postgres
+      - redis
+      - elasticsearch
+    networks:
+      - streaming_network
+    restart: unless-stopped
+    command: npm run start:dev
+
   # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
     container_name: streaming_postgres
     environment:
-      POSTGRES_DB: streaming_platform
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password123
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-streaming}
     ports:
       - "5432:5432"
     volumes:
@@ -47,57 +100,6 @@ services:
     networks:
       - streaming_network
     restart: unless-stopped
-
-  # Backend API
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: streaming_backend
-    environment:
-      - NODE_ENV=development
-      - PORT=3001
-      - DATABASE_URL=postgresql://postgres:password123@postgres:5432/streaming_platform
-      - REDIS_URL=redis://redis:6379
-      - ELASTICSEARCH_URL=http://elasticsearch:9200
-      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
-    ports:
-      - "3001:3001"
-    depends_on:
-      - postgres
-      - redis
-      - elasticsearch
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
-      - ./uploads:/app/uploads
-    networks:
-      - streaming_network
-    restart: unless-stopped
-    command: npm run start:dev
-
-  # Frontend
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: streaming_frontend
-    environment:
-      - NODE_ENV=development
-      - NEXT_PUBLIC_API_URL=http://localhost:3001
-      - NEXT_PUBLIC_GRAPHQL_URL=http://localhost:3001/graphql
-    ports:
-      - "3000:3000"
-    depends_on:
-      - backend
-    volumes:
-      - .:/app
-      - /app/node_modules
-      - /app/.next
-    networks:
-      - streaming_network
-    restart: unless-stopped
-    command: npm run dev
 
   # Nginx Reverse Proxy
   nginx:
