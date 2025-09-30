@@ -7,8 +7,13 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // Disable static optimization for all pages
+  output: 'standalone',
   experimental: {
     serverComponentsExternalPackages: [],
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
   },
   images: {
     remotePatterns: [

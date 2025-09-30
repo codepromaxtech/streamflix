@@ -1,5 +1,5 @@
 # Backend Dockerfile
-FROM node:18-alpine AS base
+FROM node:22-alpine AS base
 
 # Install dependencies for native modules
 RUN apk add --no-cache \

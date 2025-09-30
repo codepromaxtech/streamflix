@@ -1,5 +1,5 @@
 # Video Processor Service Dockerfile
-FROM node:18-alpine
+FROM node:22-alpine
 
 # Install FFmpeg and other dependencies
 RUN apk add --no-cache \

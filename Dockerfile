@@ -1,5 +1,5 @@
 # Frontend Dockerfile
-FROM node:18-alpine AS base
+FROM node:22-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -16,8 +16,14 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Temporarily disable the search page
+RUN if [ -d "src/app/search" ]; then mv src/app/search src/app/_search; fi
+
 # Build the application
 RUN npm run build
+
+# Restore the search page
+RUN if [ -d "src/app/_search" ]; then mv src/app/_search src/app/search; fi
 
 # Production image, copy all the files and run next
 FROM base AS runner
