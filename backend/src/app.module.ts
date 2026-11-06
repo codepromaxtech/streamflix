@@ -24,6 +24,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { SearchModule } from './search/search.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { WebSocketModule } from './websocket/websocket.module';
+import { IptvModule } from './iptv/iptv.module';
 import { AppResolver } from './app.resolver';
 import { AppController } from './app.controller';
 
@@ -94,6 +95,7 @@ import { AppController } from './app.controller';
     SearchModule,
     NotificationsModule,
     WebSocketModule,
+    IptvModule,
   ],
   controllers: [AppController],
   providers: [AppResolver],

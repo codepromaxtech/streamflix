@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict WzyZDwuaEcxCdkxSbPS2w2nZIQJnbf9BAS7WKuxTi3WT53KfiZdS61NlG1OeEKH
+\restrict Q6IhbOOIbQp04gqE2sETkO5RwhrNi9ds7kwXH2j0Yg8eWseTuuRGiflopVprgl3
 
 -- Dumped from database version 15.19
 -- Dumped by pg_dump version 15.19
@@ -514,6 +514,36 @@ CREATE TABLE public.gift_transactions (
 ALTER TABLE public.gift_transactions OWNER TO postgres;
 
 --
+-- Name: iptv_channels; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.iptv_channels (
+    id text NOT NULL,
+    name text NOT NULL,
+    logo text NOT NULL,
+    category text DEFAULT 'General'::text NOT NULL,
+    country text DEFAULT 'Global'::text NOT NULL,
+    "countryCode" text DEFAULT 'GLOBAL'::text NOT NULL,
+    language text DEFAULT 'English'::text NOT NULL,
+    quality text DEFAULT '1080p'::text NOT NULL,
+    resolution text DEFAULT '1920x1080'::text NOT NULL,
+    "streamUrl" text NOT NULL,
+    "backupStreamUrl" text,
+    "isBdixSupported" boolean DEFAULT false NOT NULL,
+    "peeringType" text DEFAULT 'GLOBAL'::text NOT NULL,
+    "currentProgram" text,
+    "nextProgram" text,
+    "epgTime" text,
+    "isActive" boolean DEFAULT true NOT NULL,
+    "viewCount" integer DEFAULT 0 NOT NULL,
+    "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    "updatedAt" timestamp(3) without time zone NOT NULL
+);
+
+
+ALTER TABLE public.iptv_channels OWNER TO postgres;
+
+--
 -- Name: likes; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -716,6 +746,26 @@ CREATE TABLE public.payments (
 
 
 ALTER TABLE public.payments OWNER TO postgres;
+
+--
+-- Name: peering_nodes; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.peering_nodes (
+    id text NOT NULL,
+    name text NOT NULL,
+    region text NOT NULL,
+    "countryCode" text DEFAULT 'GLOBAL'::text NOT NULL,
+    "latencyMs" integer DEFAULT 10 NOT NULL,
+    status text DEFAULT 'ONLINE'::text NOT NULL,
+    description text,
+    "isActive" boolean DEFAULT true NOT NULL,
+    "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    "updatedAt" timestamp(3) without time zone NOT NULL
+);
+
+
+ALTER TABLE public.peering_nodes OWNER TO postgres;
 
 --
 -- Name: people; Type: TABLE; Schema: public; Owner: postgres
@@ -5641,6 +5691,35 @@ COPY public.gift_transactions (id, "senderId", "receiverId", "streamId", "giftId
 
 
 --
+-- Data for Name: iptv_channels; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.iptv_channels (id, name, logo, category, country, "countryCode", language, quality, resolution, "streamUrl", "backupStreamUrl", "isBdixSupported", "peeringType", "currentProgram", "nextProgram", "epgTime", "isActive", "viewCount", "createdAt", "updatedAt") FROM stdin;
+cmw5brrvn0005g9ykm2jwic5g	Jamuna Television	https://upload.wikimedia.org/wikipedia/en/thumb/f/f6/Jamuna_Television_logo.svg/320px-Jamuna_Television_logo.svg.png	News	Bangladesh	BD	Bengali	1080p FHD	1920x1080	https://www.youtube.com/watch?v=sI9dKffYn0k	\N	t	BDIX	Jamuna Shongbad Live (24/7 National)	Bishleshon Talk Show	LIVE NOW	t	0	2026-11-06 18:45:47.363	2026-11-06 18:45:47.363
+cmw5brrvt0006g9ykmnb46uu3	Somoy News TV	https://upload.wikimedia.org/wikipedia/en/thumb/8/82/Somoy_TV_logo.svg/320px-Somoy_TV_logo.svg.png	News	Bangladesh	BD	Bengali	1080p FHD	1920x1080	https://www.youtube.com/watch?v=76vI987cWpA	\N	t	BDIX	Somoy Bulletin Live	Shompadokiyo Editorial	LIVE NOW	t	0	2026-11-06 18:45:47.37	2026-11-06 18:45:47.37
+cmw5brrvy0007g9yktnjh2py6	Ekattor TV (71 News)	https://upload.wikimedia.org/wikipedia/en/thumb/4/47/Ekattor_TV_logo.svg/320px-Ekattor_TV_logo.svg.png	News	Bangladesh	BD	Bengali	1080p FHD	1920x1080	https://www.youtube.com/watch?v=Gk6W75uL-a8	\N	t	BDIX	Ekattor Journal	Ekattor Songjog Talk Show	LIVE NOW	t	0	2026-11-06 18:45:47.375	2026-11-06 18:45:47.375
+cmw5brrw30008g9ykl6via2bg	Channel i	https://upload.wikimedia.org/wikipedia/en/thumb/1/10/Channel_i_logo.svg/320px-Channel_i_logo.svg.png	Entertainment	Bangladesh	BD	Bengali	1080p FHD	1920x1080	https://www.youtube.com/watch?v=F_Y8G3X3oTI	\N	t	BDIX	Tritiyo Matra Talk Show	Hridoye Mati O Manush	LIVE NOW	t	0	2026-11-06 18:45:47.379	2026-11-06 18:45:47.379
+cmw5brrw80009g9ykxyk2ajsu	BTV National & World	https://upload.wikimedia.org/wikipedia/en/thumb/9/91/Bangladesh_Television_logo.svg/320px-Bangladesh_Television_logo.svg.png	General	Bangladesh	BD	Bengali	1080p FHD	1920x1080	https://www.youtube.com/watch?v=x7W_JmX3K8I	\N	t	BDIX	National Evening Bulletin	Kisholoy Cultural Programme	LIVE NOW	t	0	2026-11-06 18:45:47.384	2026-11-06 18:45:47.384
+cmw5brrwd000ag9ykm9v0wt0n	DBC News	https://upload.wikimedia.org/wikipedia/en/thumb/b/b3/DBC_News_logo.png/320px-DBC_News_logo.png	News	Bangladesh	BD	Bengali	1080p FHD	1920x1080	https://www.youtube.com/watch?v=4x99Y5i22uA	\N	t	BDIX	DBC Shongbad Protidin	Rajkahl Political Hour	LIVE NOW	t	0	2026-11-06 18:45:47.389	2026-11-06 18:45:47.389
+cmw5brrwh000bg9yks10q7fww	Independent Television	https://upload.wikimedia.org/wikipedia/en/thumb/e/e9/Independent_Television_logo.svg/320px-Independent_Television_logo.svg.png	News	Bangladesh	BD	Bengali	1080p FHD	1920x1080	https://www.youtube.com/watch?v=oVbYj3t8w9A	\N	t	BDIX	Independent 24 Hour Stream	Searchlight Investigative Doc	LIVE NOW	t	0	2026-11-06 18:45:47.394	2026-11-06 18:45:47.394
+cmw5brrwm000cg9yk14zcne71	T Sports Live	https://upload.wikimedia.org/wikipedia/en/thumb/7/75/T_Sports_logo.svg/320px-T_Sports_logo.svg.png	Sports	Bangladesh	BD	Bengali	1080p 60fps	1920x1080	https://www.youtube.com/watch?v=jNQXAC9IVRw	\N	t	BDIX	Cricket Live & Football Highlights	Premier League Match Center	LIVE NOW	t	0	2026-11-06 18:45:47.398	2026-11-06 18:45:47.398
+cmw5brrws000dg9yks4oe5nl6	NTV Bangladesh	https://upload.wikimedia.org/wikipedia/en/thumb/0/07/NTV_Bangladesh_Logo.svg/320px-NTV_Bangladesh_Logo.svg.png	Entertainment	Bangladesh	BD	Bengali	1080p FHD	1920x1080	https://www.youtube.com/watch?v=Vl8_v5zU7lU	\N	t	BDIX	NTV Drama Serial: Family Crisis	Ganer Bhuban Music Live	LIVE NOW	t	0	2026-11-06 18:45:47.404	2026-11-06 18:45:47.404
+cmw5brrwx000eg9ykejfij2ol	ATN Bangla	https://upload.wikimedia.org/wikipedia/en/thumb/d/d7/ATN_Bangla_Logo.svg/320px-ATN_Bangla_Logo.svg.png	Entertainment	Bangladesh	BD	Bengali	720p HD	1280x720	https://www.youtube.com/watch?v=FjI8f3y_1aI	\N	t	BDIX	Shonglap Talk Show	Bangla Cinema Premiere	LIVE NOW	t	0	2026-11-06 18:45:47.41	2026-11-06 18:45:47.41
+cmw5brrx2000fg9yknnt3meto	Aaj Tak HD	https://upload.wikimedia.org/wikipedia/en/thumb/2/22/Aaj_Tak_logo.svg/320px-Aaj_Tak_logo.svg.png	News	India	IN	Hindi	1080p FHD	1920x1080	https://www.youtube.com/watch?v=Nq2wYlWFucg	\N	f	NIXI	Dangal Prime Time Debate	Khabardar Special Report	LIVE NOW	t	0	2026-11-06 18:45:47.415	2026-11-06 18:45:47.415
+cmw5brrx7000gg9yk6nzngnv0	NDTV 24x7 India	https://upload.wikimedia.org/wikipedia/en/thumb/4/4e/NDTV_logo.svg/320px-NDTV_logo.svg.png	News	India	IN	English	1080p FHD	1920x1080	https://www.youtube.com/watch?v=WB-y7_c6SeA	\N	f	NIXI	The Buck Stops Here	Prime Time with NDTV	LIVE NOW	t	0	2026-11-06 18:45:47.42	2026-11-06 18:45:47.42
+cmw5brrxd000hg9ykoo2b3psj	Doordarshan DD National	https://upload.wikimedia.org/wikipedia/en/thumb/c/c9/Doordarshan_logo.svg/320px-Doordarshan_logo.svg.png	General	India	IN	Hindi	1080p FHD	1920x1080	https://www.youtube.com/watch?v=4x99Y5i22uA	\N	f	NIXI	Chitrahaar & National Heritage	Samachar Express	LIVE NOW	t	0	2026-11-06 18:45:47.426	2026-11-06 18:45:47.426
+cmw5brrxi000ig9ykzgylxwz7	Al Jazeera English	https://upload.wikimedia.org/wikipedia/en/thumb/f/f2/Al_Jazeera_English_logo.svg/320px-Al_Jazeera_English_logo.svg.png	News	Global	GLOBAL	English	1080p FHD	1920x1080	https://www.youtube.com/watch?v=gCNeDWCI0vo	\N	t	GLOBAL	Al Jazeera Newshour Global	Inside Story: World Analysis	LIVE NOW	t	0	2026-11-06 18:45:47.431	2026-11-06 18:45:47.431
+cmw5brrxr000jg9ykx1tsj7p9	Sky News International	https://upload.wikimedia.org/wikipedia/en/thumb/9/9f/Sky_News_2018_logo.svg/320px-Sky_News_2018_logo.svg.png	News	United Kingdom	UK	English	1080p 60fps	1920x1080	https://www.youtube.com/watch?v=9Auq9mYxFEE	\N	t	GLOBAL	Sky News Live at Ten	Press Preview & Global Brief	LIVE NOW	t	0	2026-11-06 18:45:47.439	2026-11-06 18:45:47.439
+cmw5brrxx000kg9ykl5j3i8w3	Bloomberg Television	https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Bloomberg_Television_logo.svg/320px-Bloomberg_Television_logo.svg.png	News	United States	US	English	1080p FHD	1920x1080	https://www.youtube.com/watch?v=dp8PhLsUcFE	\N	t	GLOBAL	Bloomberg Surveillance & Markets	Bloomberg Technology Live	LIVE NOW	t	0	2026-11-06 18:45:47.445	2026-11-06 18:45:47.445
+cmw5brry1000lg9yk2q71fbuh	ABC News Live US	https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/ABC_News_Live_logo_2021.svg/320px-ABC_News_Live_logo_2021.svg.png	News	United States	US	English	1080p FHD	1920x1080	https://www.youtube.com/watch?v=w_Ma8oQLmSM	\N	f	GLOBAL	ABC News Live Prime	World News Tonight Broadcast	LIVE NOW	t	0	2026-11-06 18:45:47.449	2026-11-06 18:45:47.449
+cmw5brry6000mg9ykxjp08kz7	NASA TV HD (ISS Live)	https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/NASA_logo.svg/320px-NASA_logo.svg.png	Documentary	United States	US	English	1080p 60fps	1920x1080	https://www.youtube.com/watch?v=21X5lGlDOfg	\N	t	GLOBAL	Earth from Space: ISS Live Views	Artemis Moon Mission Deep Dive	LIVE NOW	t	0	2026-11-06 18:45:47.454	2026-11-06 18:45:47.454
+cmw5brrya000ng9ykt4gy2iqz	DW News English (Deutsche Welle)	https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Deutsche_Welle_symbol_2012.svg/320px-Deutsche_Welle_symbol_2012.svg.png	News	Global	GLOBAL	English	1080p FHD	1920x1080	https://www.youtube.com/watch?v=GE_SfNVNyqk	\N	t	GLOBAL	DW News Global Bulletin	Conflict Zone Documentary	LIVE NOW	t	0	2026-11-06 18:45:47.459	2026-11-06 18:45:47.459
+cmw5brryf000og9yk6x8fq65l	France 24 English	https://upload.wikimedia.org/wikipedia/en/thumb/6/65/France_24_logo.svg/320px-France_24_logo.svg.png	News	Global	GLOBAL	English	1080p FHD	1920x1080	https://www.youtube.com/watch?v=h3MuIUNCCzI	\N	t	GLOBAL	Eye on the Americas & Europe	Across Africa Cultural Spotlight	LIVE NOW	t	0	2026-11-06 18:45:47.463	2026-11-06 18:45:47.463
+cmw5brryj000pg9ykzngsrskb	Red Bull TV Extreme Sports	https://upload.wikimedia.org/wikipedia/en/thumb/f/f5/Red_Bull_TV_logo.svg/320px-Red_Bull_TV_logo.svg.png	Sports	Global	GLOBAL	English	1080p 60fps	1920x1080	https://www.youtube.com/watch?v=4T1bH2w7HqU	\N	t	GLOBAL	Red Bull Rampage & F1 Paddock	Cliff Diving World Series	LIVE NOW	t	0	2026-11-06 18:45:47.468	2026-11-06 18:45:47.468
+\.
+
+
+--
 -- Data for Name: likes; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -5798,6 +5877,19 @@ COPY public.notifications (id, "userId", title, message, type, channels, priorit
 --
 
 COPY public.payments (id, "userId", amount, currency, status, "paymentMethod", "paymentIntentId", "subscriptionType", type, "createdAt", "updatedAt") FROM stdin;
+\.
+
+
+--
+-- Data for Name: peering_nodes; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.peering_nodes (id, name, region, "countryCode", "latencyMs", status, description, "isActive", "createdAt", "updatedAt") FROM stdin;
+cmw5brrus0000g9yk6glzz8yo	BDIX Core Peering Node (Dhaka)	Dhaka, Bangladesh	BD	9	OPTIMAL	High-speed local peering via Bangladesh Internet Exchange. Zero-buffer bufferless 1080p stream for all BD ISPs.	t	2026-11-06 18:45:47.333	2026-11-06 18:45:47.333
+cmw5brrv00001g9yk82fuzb90	BDIX Coastal Node (Chittagong)	Chittagong, Bangladesh	BD	14	ONLINE	Low-latency submarine cable routing for South-East Bangladesh.	t	2026-11-06 18:45:47.341	2026-11-06 18:45:47.341
+cmw5brrv50002g9ykzwo7jz0q	NIXI Gateway (Mumbai / Delhi)	Mumbai, India	IN	32	OPTIMAL	National Internet Exchange of India low-latency South Asia edge routing.	t	2026-11-06 18:45:47.346	2026-11-06 18:45:47.346
+cmw5brrvb0003g9yk8l3smebo	DE-CIX Central Hub (Frankfurt)	Frankfurt, Germany	GLOBAL	118	ONLINE	Continental European high-capacity transit exchange.	t	2026-11-06 18:45:47.351	2026-11-06 18:45:47.351
+cmw5brrvg0004g9yk5vnz3i8d	Cloudflare Anycast Global Edge	Global Edge (300+ Cities)	GLOBAL	18	OPTIMAL	Distributed CDN edge routing closest to user ISP.	t	2026-11-06 18:45:47.357	2026-11-06 18:45:47.357
 \.
 
 
@@ -6371,6 +6463,14 @@ ALTER TABLE ONLY public.gift_transactions
 
 
 --
+-- Name: iptv_channels iptv_channels_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.iptv_channels
+    ADD CONSTRAINT iptv_channels_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: likes likes_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -6448,6 +6548,14 @@ ALTER TABLE ONLY public.notifications
 
 ALTER TABLE ONLY public.payments
     ADD CONSTRAINT payments_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: peering_nodes peering_nodes_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.peering_nodes
+    ADD CONSTRAINT peering_nodes_pkey PRIMARY KEY (id);
 
 
 --
@@ -7733,5 +7841,5 @@ ALTER TABLE ONLY public.xp_transactions
 -- PostgreSQL database dump complete
 --
 
-\unrestrict WzyZDwuaEcxCdkxSbPS2w2nZIQJnbf9BAS7WKuxTi3WT53KfiZdS61NlG1OeEKH
+\unrestrict Q6IhbOOIbQp04gqE2sETkO5RwhrNi9ds7kwXH2j0Yg8eWseTuuRGiflopVprgl3
 

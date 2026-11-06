@@ -30,6 +30,7 @@ export function Header() {
     { name: 'Movies', href: '/movies' },
     { name: 'TV Shows', href: '/tv-shows' },
     { name: 'Documentaries', href: '/documentaries' },
+    { name: 'Live IPTV', href: '/iptv', isLive: true },
     { name: 'My List', href: '/my-list' },
   ]
 
@@ -51,8 +52,14 @@ export function Header() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="text-gray-300 hover:text-white transition-colors text-sm font-medium tracking-wide"
+                  className="text-gray-300 hover:text-white transition-colors text-sm font-medium tracking-wide flex items-center gap-1.5"
                 >
+                  {item.isLive && (
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+                    </span>
+                  )}
                   {item.name}
                 </Link>
               ))}

@@ -1416,4 +1416,45 @@ model UserInteraction {
   @@map("user_interactions")
 }
 
+model IptvChannel {
+  id              String   @id @default(cuid())
+  name            String
+  logo            String
+  category        String   @default("General")
+  country         String   @default("Global")
+  countryCode     String   @default("GLOBAL")
+  language        String   @default("English")
+  quality         String   @default("1080p")
+  resolution      String   @default("1920x1080")
+  streamUrl       String
+  backupStreamUrl String?
+  isBdixSupported Boolean  @default(false)
+  peeringType     String   @default("GLOBAL")
+  currentProgram  String?
+  nextProgram     String?
+  epgTime         String?
+  isActive        Boolean  @default(true)
+  viewCount       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("iptv_channels")
+}
+
+model PeeringNode {
+  id          String   @id @default(cuid())
+  name        String
+  region      String
+  countryCode String   @default("GLOBAL")
+  latencyMs   Int      @default(10)
+  status      String   @default("ONLINE")
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("peering_nodes")
+}
+
+
 
