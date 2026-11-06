@@ -25,6 +25,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { IptvPlayer } from '@/components/iptv/iptv-player'
 
 interface IptvChannel {
   id: string
@@ -213,12 +214,6 @@ export default function IptvPage() {
     }
   }
 
-  // Active video embed helper
-  const activeYouTubeId = activeChannel ? extractYouTubeId(activeChannel.streamUrl) : null
-  const isDirectHls =
-    activeChannel &&
-    (activeChannel.streamUrl.includes('.m3u8') || activeChannel.streamUrl.includes('.mpd'))
-
   return (
     <div className="min-h-screen bg-netflix-black text-white flex flex-col selection:bg-netflix-red selection:text-white">
       <Header />
@@ -270,108 +265,9 @@ export default function IptvPage() {
         {/* MAIN STAGE: Live Stream Player & Active Channel Telemetry */}
         {/* ============================================================== */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
-          {/* Left: Broadcast Screen */}
-          <div className="lg:col-span-8 flex flex-col bg-gray-950 border border-gray-800/90 rounded-3xl overflow-hidden shadow-2xl">
-            {/* Live Video Viewport */}
-            <div className="relative aspect-video w-full bg-black flex items-center justify-center overflow-hidden">
-              {activeChannel ? (
-                activeYouTubeId ? (
-                  <iframe
-                    src={`https://www.youtube-nocookie.com/embed/${activeYouTubeId}?autoplay=1&mute=0&controls=1&rel=0&modestbranding=1`}
-                    title={activeChannel.name}
-                    className="w-full h-full border-0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                ) : isDirectHls ? (
-                  <video
-                    src={activeChannel.streamUrl}
-                    controls
-                    autoPlay
-                    playsInline
-                    className="w-full h-full object-contain"
-                  />
-                ) : (
-                  <iframe
-                    src={activeChannel.streamUrl}
-                    title={activeChannel.name}
-                    className="w-full h-full border-0"
-                    allowFullScreen
-                  />
-                )
-              ) : (
-                <div className="flex flex-col items-center justify-center p-8 text-center text-gray-500">
-                  <Tv className="h-14 w-14 mb-3 text-gray-700 animate-pulse" />
-                  <p className="text-sm">Select any live channel below to start streaming.</p>
-                </div>
-              )}
-
-              {/* Top Stream Badge Overlay */}
-              {activeChannel && (
-                <div className="absolute top-3 left-3 z-10 pointer-events-none flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-black bg-red-600 text-white shadow-lg tracking-wider">
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
-                    </span>
-                    LIVE
-                  </span>
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-black/75 backdrop-blur-md text-emerald-400 border border-gray-800 font-mono">
-                    {activeChannel.quality || '1080p FHD'}
-                  </span>
-                  {activeChannel.isBdixSupported && (
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 font-mono flex items-center gap-1">
-                      <Zap className="h-2.5 w-2.5 text-emerald-400" />
-                      BDIX ROUTED
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Bottom Stream Telemetry Bar */}
-            {activeChannel && (
-              <div className="p-4 sm:p-5 bg-gradient-to-b from-gray-900/90 to-gray-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-t border-gray-800/80">
-                <div className="flex items-center gap-4">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={activeChannel.logo}
-                    alt={activeChannel.name}
-                    className="h-12 w-12 rounded-xl object-contain bg-white/10 p-1 border border-gray-700 shadow-md shrink-0"
-                    onError={(e) => {
-                      ;(e.target as HTMLImageElement).src = '/placeholder-poster.svg'
-                    }}
-                  />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-lg font-black text-white">{activeChannel.name}</h2>
-                      <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-gray-800 text-gray-300 border border-gray-700">
-                        {activeChannel.country}
-                      </span>
-                      <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-purple-950/60 text-purple-300 border border-purple-500/30">
-                        {activeChannel.category}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-300 mt-1 flex items-center gap-1.5">
-                      <span className="font-semibold text-emerald-400">NOW AIRING:</span>
-                      <span>{activeChannel.currentProgram || '24/7 Live Broadcast Feed'}</span>
-                    </p>
-                  </div>
-                </div>
-
-                {/* Active Peering Node Badge */}
-                <div className="flex items-center gap-2 self-end sm:self-center bg-black/60 px-3 py-2 rounded-xl border border-gray-800 text-xs font-mono">
-                  <div className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-                  <span className="text-gray-400">ROUTE:</span>
-                  <span className="text-white font-semibold">
-                    {activePeeringNode ? activePeeringNode.name.split('(')[0] : 'BDIX Core Peering'}
-                  </span>
-                  <span className="text-emerald-400 font-bold">
-                    {activePeeringNode ? `${activePeeringNode.latencyMs}ms` : '9ms'}
-                  </span>
-                </div>
-              </div>
-            )}
+          {/* Left: Broadcast Screen with Shaka Player & Stream Switcher */}
+          <div className="lg:col-span-8">
+            <IptvPlayer channel={activeChannel} peeringNode={activePeeringNode} />
           </div>
 
           {/* Right: Regional Peering & Routing Gateway Manager */}
