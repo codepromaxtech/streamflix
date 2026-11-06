@@ -40,11 +40,11 @@ interface ChatMessage {
   },
   namespace: '/',
 })
-export class WebSocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class StreamWebSocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
-  private readonly logger = new Logger(WebSocketGateway.name);
+  private readonly logger = new Logger(StreamWebSocketGateway.name);
   private connectedUsers: Map<string, AuthenticatedSocket> = new Map();
   private streamRooms: Map<string, StreamRoom> = new Map();
   private userRooms: Map<string, Set<string>> = new Map(); // userId -> Set of room names
@@ -261,9 +261,7 @@ export class WebSocketGateway implements OnGatewayConnection, OnGatewayDisconnec
           id: chatMessage.id,
           streamId,
           userId: client.userId,
-          username: client.user.name,
           message: chatMessage.message,
-          timestamp: chatMessage.timestamp,
           type: chatMessage.type,
         },
       });

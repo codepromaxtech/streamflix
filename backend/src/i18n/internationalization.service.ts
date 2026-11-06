@@ -434,7 +434,7 @@ export class InternationalizationService {
       }
 
       locales.forEach(locale => {
-        this.locales.set(locale.code, locale as LocaleConfig);
+        this.locales.set(locale.code, locale as unknown as LocaleConfig);
         if (locale.isDefault) {
           this.defaultLocale = locale.code;
         }

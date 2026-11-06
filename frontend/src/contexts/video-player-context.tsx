@@ -112,6 +112,7 @@ export function VideoPlayerProvider({ children }: { children: React.ReactNode })
     toggleSubtitles,
     updateProgress,
     setIsBuffering,
+    setIsPlaying,
   }
 
   return (

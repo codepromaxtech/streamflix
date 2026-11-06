@@ -292,7 +292,7 @@ export default function RegisterPage() {
         {/* Footer */}
         <div className="text-center mt-8 text-gray-500 text-sm">
           <p>
-            This page is protected by Google reCAPTCHA to ensure you're not a bot.{' '}
+            This page is protected by Google reCAPTCHA to ensure you&apos;re not a bot.{' '}
             <Link href="/privacy" className="text-blue-400 hover:underline">
               Learn more
             </Link>

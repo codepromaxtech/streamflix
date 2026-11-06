@@ -34,7 +34,7 @@ services:
     environment:
       - NODE_ENV=development
       - PORT=4000
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-streaming}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password123}@postgres:5432/${POSTGRES_DB:-streaming_platform}
       - REDIS_URL=redis://redis:6379
       - ELASTICSEARCH_NODE=http://elasticsearch:9200
       - JWT_SECRET=your-super-secret-jwt-key-change-in-production
@@ -60,8 +60,8 @@ services:
     container_name: streaming_postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-streaming}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password123}
+      POSTGRES_DB: ${POSTGRES_DB:-streaming_platform}
     ports:
       - "5432:5432"
     volumes:

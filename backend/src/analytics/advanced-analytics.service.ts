@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { PaymentStatus } from '@prisma/client';
 
 interface AnalyticsMetrics {
   users: UserMetrics;
@@ -441,7 +442,7 @@ export class AdvancedAnalyticsService {
     const payments = await this.prisma.payment.findMany({
       where: {
         ...whereClause,
-        status: 'completed',
+        status: PaymentStatus.COMPLETED,
       },
     });
 
@@ -486,7 +487,7 @@ export class AdvancedAnalyticsService {
     const previousRevenue = await this.prisma.payment.aggregate({
       where: {
         ...(tenantId && { tenantId }),
-        status: 'completed',
+        status: PaymentStatus.COMPLETED,
         createdAt: {
           gte: previousPeriod.start,
           lte: previousPeriod.end,
@@ -815,14 +816,10 @@ export class AdvancedAnalyticsService {
       await this.prisma.analyticsReport.create({
         data: {
           id: report.id,
-          tenantId: report.tenantId,
+          type: report.reportType,
           reportType: report.reportType,
-          dateRangeStart: report.dateRange.start,
-          dateRangeEnd: report.dateRange.end,
-          metrics: report.metrics,
-          insights: report.insights,
-          recommendations: report.recommendations,
-          generatedAt: report.generatedAt,
+          tenantId: report.tenantId,
+          data: report as any,
         },
       });
     } catch (error) {

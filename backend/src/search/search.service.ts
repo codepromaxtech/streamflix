@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { PrismaService } from '../prisma/prisma.service';
@@ -30,7 +30,8 @@ export class SearchService {
   private readonly indexName = 'streaming_content';
 
   constructor(
-    private readonly elasticsearch: ElasticsearchService,
+    @Inject(ElasticsearchService)
+    private readonly elasticsearch: any,
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
   ) {
@@ -311,50 +312,93 @@ export class SearchService {
         body: searchBody,
       });
 
-      const results: SearchResult[] = response.body.hits.hits.map((hit: any) => ({
+      const results: SearchResult[] = (response?.body?.hits?.hits || []).map((hit: any) => ({
         id: hit._id,
         title: hit._source.title,
         description: hit._source.description,
         type: hit._source.type,
-        genre: hit._source.genre,
+        genre: Array.isArray(hit._source.genre) ? hit._source.genre : [hit._source.genre || 'General'],
         rating: hit._source.rating,
         releaseDate: hit._source.releaseDate,
-        thumbnail: `/images/${hit._id}-thumb.jpg`, // Construct thumbnail URL
+        thumbnail: hit._source.thumbnail || hit._source.backdrop || '/placeholder-poster.svg',
         score: hit._score,
       }));
 
+      const totalHits = response?.body?.hits?.total?.value || 0;
+      if (results.length === 0) {
+        return this.searchPrismaFallback(query, filters, limit, offset);
+      }
+
       return {
         results,
-        total: response.body.hits.total.value,
+        total: totalHits,
       };
-    } catch (error) {
-      this.logger.error('Search failed:', error);
+    } catch (error: any) {
+      this.logger.warn(`Elasticsearch failed (${error?.message}), falling back directly to PostgreSQL`);
+      return this.searchPrismaFallback(query, filters, limit, offset);
+    }
+  }
+
+  private async searchPrismaFallback(
+    query: string,
+    filters: SearchFilters = {},
+    limit = 20,
+    offset = 0,
+  ): Promise<{ results: SearchResult[]; total: number }> {
+    try {
+      const where: any = { isPublished: true };
+      if (query && query.trim()) {
+        where.OR = [
+          { title: { contains: query.trim(), mode: 'insensitive' } },
+          { description: { contains: query.trim(), mode: 'insensitive' } },
+          { genre: { contains: query.trim(), mode: 'insensitive' } },
+        ];
+      }
+      if (filters.type && filters.type.length > 0) {
+        where.type = { in: filters.type.map((t) => t.toUpperCase()) };
+      }
+
+      const [items, total] = await Promise.all([
+        this.prisma.content.findMany({
+          where,
+          take: limit,
+          skip: offset,
+          orderBy: { rating: 'desc' },
+        }),
+        this.prisma.content.count({ where }),
+      ]);
+
+      const results: SearchResult[] = items.map((item) => ({
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        type: item.type.toLowerCase(),
+        genre: Array.isArray(item.genre) ? item.genre : [item.genre || 'General'],
+        rating: item.rating,
+        releaseDate: item.releaseDate ? item.releaseDate.toISOString().split('T')[0] : '2024-01-01',
+        thumbnail: item.thumbnail || item.backdrop || '/placeholder-poster.svg',
+        score: item.rating,
+      }));
+
+      return { results, total };
+    } catch (err: any) {
+      this.logger.error('Prisma search fallback error:', err);
       return { results: [], total: 0 };
     }
   }
 
   async getSuggestions(query: string, limit = 10): Promise<string[]> {
     try {
-      const response = await this.elasticsearch.search({
-        index: this.indexName,
-        body: {
-          suggest: {
-            title_suggest: {
-              prefix: query,
-              completion: {
-                field: 'title.suggest',
-                size: limit,
-              },
-            },
-          },
+      const dbItems = await this.prisma.content.findMany({
+        where: {
+          isPublished: true,
+          title: { contains: query.trim(), mode: 'insensitive' },
         },
+        take: limit,
+        select: { title: true },
       });
-
-      return response.body.suggest.title_suggest[0].options.map(
-        (option: any) => option.text,
-      );
-    } catch (error) {
-      this.logger.error('Suggestions failed:', error);
+      return dbItems.map((d) => d.title);
+    } catch (err) {
       return [];
     }
   }

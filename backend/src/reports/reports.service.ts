@@ -155,8 +155,8 @@ export class ReportsService {
     // Revenue metrics
     const revenueData = await this.prisma.payment.aggregate({
       where: {
-        ...whereClause,
-        status: 'completed',
+        ...(tenantId && { tenantId }),
+        status: 'COMPLETED',
       },
       _sum: { amount: true },
     });
@@ -164,7 +164,7 @@ export class ReportsService {
     const monthlyRevenueData = await this.prisma.payment.aggregate({
       where: {
         ...(tenantId && { tenantId }),
-        status: 'completed',
+        status: 'COMPLETED',
         createdAt: {
           gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
         },
@@ -178,7 +178,14 @@ export class ReportsService {
     });
 
     const totalViews = await this.prisma.watchHistory.count({
-      where: whereClause,
+      where: dateRange
+        ? {
+            watchedAt: {
+              gte: dateRange.start,
+              lte: dateRange.end,
+            },
+          }
+        : {},
     });
 
     return {

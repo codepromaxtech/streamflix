@@ -2,7 +2,8 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -11,35 +12,96 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  avatar    String?
-  password  String
-  role      UserRole @default(USER)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  name                String
+  avatar              String?
+  password            String
+  role                UserRole  @default(USER)
+  isActive            Boolean   @default(true)
+  isVerified          Boolean   @default(false)
+  isEmailVerified     Boolean   @default(false)
+  emailVerificationToken String?
+  registrationIP      String?
+  isStreamer          Boolean   @default(false)
+  lastLoginAt         DateTime?
+  lastLoginIP         String?
+  tokenVersion        Int       @default(0)
+  failedLoginAttempts Int       @default(0)
+  isLocked            Boolean   @default(false)
+  lockedUntil         DateTime?
+  resetToken          String?
+  resetTokenExpires   DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
-  // Relations
-  profiles      UserProfile[]
-  subscriptions Subscription[]
-  watchHistory  WatchHistory[]
-  favorites     Favorite[]
-  reviews       Review[]
-  payments      Payment[]
-  notifications Notification[]
+  // Core Relations
+  profiles                UserProfile[]
+  subscriptions           Subscription[]
+  watchHistory            WatchHistory[]
+  favorites               Favorite[]
+  reviews                 Review[]
+  payments                Payment[]
+  notifications           Notification[]
+  notificationPreferences NotificationPreferences?
+
+  // Extended Features Relations
+  blogPosts             BlogPost[]
+  blogComments          BlogComment[]
+  blogAuthoredComments  BlogComment[]     @relation("CommentAuthor")
+  donations             Donation[]        @relation("DonorDonations")
+  streamerEarns         Donation[]        @relation("StreamerDonations")
+  sentGifts             GiftTransaction[] @relation("SentGifts")
+  receivedGifts         GiftTransaction[] @relation("ReceivedGifts")
+  streamerSessions      PrivateSession[]  @relation("StreamerSessions")
+  viewerSessions        PrivateSession[]  @relation("ViewerSessions")
+  shortVideos           ShortVideo[]
+  liveStreams           LiveStream[]
+  streamViews           StreamViewer[]
+  chatMessages          ChatMessage[]
+  twoFactorAuth         TwoFactorAuth?
+  userStats             UserStats?
+  achievements          UserAchievement[]
+  rewards               UserReward[]
+  loginAttempts         LoginAttempt[]
+  followers             Follow[]          @relation("Followers")
+  following             Follow[]          @relation("Following")
+  scheduledStreams      ScheduledStream[]
+  tenantId              String?
+  sessions              UserSession[]
+  comments              Comment[]
+  likes                 Like[]
+  watchlist             Watchlist[]
+  ratings               Rating[]
+  followersCount        Int               @default(0)
+  allowsPrivateSessions Boolean           @default(false)
+  createdContent        Content[]         @relation("ContentCreator")
+  wallet                UserWallet?
+  userPoints            UserPoints?
+  streamerEarnings      StreamerEarnings?
+  streamerPayouts       StreamerPayout[]
+  purchases             Purchase[]
+  pointTransactions     PointsTransaction[]
+  xpTransactions        XpTransaction[]
+  walletTransactions    WalletTransaction[]
+  shortInteractions     ShortVideoInteraction[]
+  shortComments         ShortVideoComment[]
+  streamReminders       StreamReminder[]
+  pushTokens            PushToken[]
+  recoveryCodes         TwoFactorRecovery[]
+  userInteractions      UserInteraction[]
+  comingSoonStreams     ComingSoonStream[]
 
   @@map("users")
 }
 
 model UserProfile {
-  id             String @id @default(cuid())
+  id             String   @id @default(cuid())
   name           String
   avatar         String?
-  isKidsProfile  Boolean @default(false)
-  language       String @default("en")
-  maturityRating String @default("PG-13")
+  isKidsProfile  Boolean  @default(false)
+  language       String   @default("en")
+  maturityRating String   @default("PG-13")
   userId         String
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -52,16 +114,16 @@ model UserProfile {
 }
 
 model Subscription {
-  id                  String            @id @default(cuid())
-  userId              String
-  planType            SubscriptionType
-  status              SubscriptionStatus
-  currentPeriodStart  DateTime
-  currentPeriodEnd    DateTime
-  cancelAtPeriodEnd   Boolean           @default(false)
+  id                   String             @id @default(cuid())
+  userId               String
+  planType             SubscriptionType
+  status               SubscriptionStatus
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  cancelAtPeriodEnd    Boolean            @default(false)
   stripeSubscriptionId String?
-  createdAt           DateTime          @default(now())
-  updatedAt           DateTime          @updatedAt
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
 
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -77,7 +139,7 @@ model Content {
   backdrop       String?
   trailer        String?
   videoUrl       String
-  duration       Int         // in seconds
+  duration       Int // in seconds
   releaseDate    DateTime
   rating         Float       @default(0)
   maturityRating String
@@ -89,10 +151,21 @@ model Content {
   isExclusive    Boolean     @default(false)
   isPremium      Boolean     @default(false)
   isPublished    Boolean     @default(false)
+  isFeatured     Boolean     @default(false)
+  isTrending     Boolean     @default(false)
+  viewCount      Int         @default(0)
+  creatorId      String?
+  isApproved     Boolean     @default(true)
+  tenantId       String?
+  genre          String?
+  director       String?
+  moderationStatus String?
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 
   // Relations
+  creator       User?          @relation("ContentCreator", fields: [creatorId], references: [id], onDelete: SetNull)
+  tenant        Tenant?        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   series        Content?       @relation("SeriesEpisodes", fields: [seriesId], references: [id])
   episodes      Content[]      @relation("SeriesEpisodes")
   genres        ContentGenre[]
@@ -105,7 +178,14 @@ model Content {
   favorites     Favorite[]
   reviews       Review[]
   adBreaks      AdBreak[]
+  moderationResults ModerationResult[]
+  comments      Comment[]
+  likes         Like[]
+  watchlist     Watchlist[]
+  ratings       Rating[]
 
+  @@index([isPublished, type])
+  @@index([rating])
   @@map("content")
 }
 
@@ -166,7 +246,7 @@ model ContentCrew {
 }
 
 model Subtitle {
-  id        String @id @default(cuid())
+  id        String  @id @default(cuid())
   contentId String
   language  String
   label     String
@@ -179,7 +259,7 @@ model Subtitle {
 }
 
 model AudioTrack {
-  id        String @id @default(cuid())
+  id        String  @id @default(cuid())
   contentId String
   language  String
   label     String
@@ -196,7 +276,7 @@ model QualityLevel {
   contentId  String
   quality    String // 4K, 1080p, 720p, etc.
   resolution String // 3840x2160, 1920x1080, etc.
-  bitrate    Int    // in kbps
+  bitrate    Int // in kbps
   url        String
 
   content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
@@ -210,8 +290,11 @@ model WatchHistory {
   profileId String?
   contentId String
   progress  Float    @default(0) // percentage watched
+  watchDuration Int    @default(0)
   completed Boolean  @default(false)
   watchedAt DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
 
   user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   profile UserProfile? @relation(fields: [profileId], references: [id], onDelete: SetNull)
@@ -238,7 +321,7 @@ model Review {
   id        String   @id @default(cuid())
   userId    String
   contentId String
-  rating    Int      // 1-10
+  rating    Int // 1-10
   comment   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -256,8 +339,8 @@ model Advertisement {
   description String?
   videoUrl    String
   clickUrl    String?
-  duration    Int       // in seconds
-  skipAfter   Int?      // seconds after which skip is allowed
+  duration    Int // in seconds
+  skipAfter   Int? // seconds after which skip is allowed
   isActive    Boolean   @default(true)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -267,11 +350,11 @@ model Advertisement {
 }
 
 model AdBreak {
-  id             String @id @default(cuid())
-  contentId      String
+  id              String @id @default(cuid())
+  contentId       String
   advertisementId String
-  position       Int    // seconds into the video
-  order          Int    @default(0)
+  position        Int // seconds into the video
+  order           Int @default(0)
 
   content       Content       @relation(fields: [contentId], references: [id], onDelete: Cascade)
   advertisement Advertisement @relation(fields: [advertisementId], references: [id], onDelete: Cascade)
@@ -280,16 +363,17 @@ model AdBreak {
 }
 
 model Payment {
-  id               String        @id @default(cuid())
+  id               String            @id @default(cuid())
   userId           String
   amount           Float
-  currency         String        @default("USD")
+  currency         String            @default("USD")
   status           PaymentStatus
-  paymentMethod    String        // stripe, sslcommerz, paypal
+  paymentMethod    String // stripe, sslcommerz, paypal
   paymentIntentId  String?
   subscriptionType SubscriptionType?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  type             String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -297,17 +381,417 @@ model Payment {
 }
 
 model Notification {
-  id        String           @id @default(cuid())
-  userId    String
-  title     String
-  message   String
-  type      NotificationType
-  isRead    Boolean          @default(false)
-  createdAt DateTime         @default(now())
+  id          String           @id @default(cuid())
+  userId      String
+  title       String
+  message     String
+  type        NotificationType
+  channels    String[]         @default([])
+  priority    String           @default("medium")
+  data        Json?
+  isRead      Boolean          @default(false)
+  scheduledAt DateTime?
+  expiresAt   DateTime?
+  sentAt      DateTime?
+  status      String           @default("pending")
+  createdAt   DateTime         @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
+}
+
+// ==========================================
+// Extended Models Supporting Backend Services
+// ==========================================
+
+model BlogPost {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  content     String
+  summary     String?
+  thumbnail   String?
+  authorId    String
+  categoryId  String?
+  status      String    @default("draft") // draft, published, archived
+  views       Int       @default(0)
+  likes       Int       @default(0)
+  publishedAt   DateTime?
+  authorType    String?
+  isSticky      Boolean   @default(false)
+  allowComments Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  author   User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  category BlogCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  comments BlogComment[]
+
+  @@map("blog_posts")
+}
+
+model BlogComment {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  content   String
+  parentId  String?
+  authorId  String?
+  status    String   @default("approved")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post    BlogPost      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  author  User?         @relation("CommentAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  parent  BlogComment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies BlogComment[] @relation("CommentReplies")
+
+  @@map("blog_comments")
+}
+
+model BlogCategory {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  slug        String     @unique
+  description String?
+  color       String?
+  postCount   Int        @default(0)
+  isActive    Boolean    @default(true)
+  posts       BlogPost[]
+
+  @@map("blog_categories")
+}
+
+model Donation {
+  id            String    @id @default(cuid())
+  donorId       String
+  streamerId    String
+  streamId      String?
+  amount        Float
+  currency      String    @default("USD")
+  message       String?
+  isAnonymous   Boolean   @default(false)
+  giftId        String?
+  status        String    @default("pending") // pending, completed, failed, refunded
+  paymentMethod String    @default("card")
+  transactionId String?
+  createdAt     DateTime  @default(now())
+  processedAt   DateTime?
+
+  donor    User @relation("DonorDonations", fields: [donorId], references: [id], onDelete: Cascade)
+  streamer User @relation("StreamerDonations", fields: [streamerId], references: [id], onDelete: Cascade)
+
+  @@map("donations")
+}
+
+model VirtualGift {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  imageUrl      String
+  price         Float
+  currency      String   @default("USD")
+  category      String   @default("hearts")
+  rarity        String   @default("common")
+  streamerShare Float    @default(70)
+  platformFee   Float    @default(30)
+  isActive       Boolean   @default(true)
+  isLimited      Boolean   @default(false)
+  availableUntil DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@map("virtual_gifts")
+}
+
+model GiftTransaction {
+  id          String   @id @default(cuid())
+  senderId    String
+  receiverId  String
+  streamId    String?
+  giftId      String
+  quantity    Int      @default(1)
+  totalAmount Float
+  message     String?
+  isAnonymous Boolean  @default(false)
+  status      String   @default("sent")
+  createdAt   DateTime @default(now())
+
+  sender   User @relation("SentGifts", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("ReceivedGifts", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@map("gift_transactions")
+}
+
+model PrivateSession {
+  id             String    @id @default(cuid())
+  streamerId     String
+  viewerId       String
+  title          String
+  description    String?
+  pricePerMinute Float
+  currency       String    @default("USD")
+  status         String    @default("scheduled")
+  scheduledAt    DateTime?
+  startedAt      DateTime?
+  endedAt        DateTime?
+  duration       Int? // minutes
+  totalCost      Float     @default(0)
+  paymentStatus  String    @default("pending")
+  streamUrl      String?
+  createdAt      DateTime  @default(now())
+
+  streamer User @relation("StreamerSessions", fields: [streamerId], references: [id], onDelete: Cascade)
+  viewer   User @relation("ViewerSessions", fields: [viewerId], references: [id], onDelete: Cascade)
+
+  @@map("private_sessions")
+}
+
+model ShortVideo {
+  id           String   @id @default(cuid())
+  title        String
+  description  String?
+  videoUrl     String
+  thumbnailUrl String
+  duration     Int      @default(15) // seconds
+  creatorId    String
+  category     String   @default("entertainment")
+  tags         String[] @default([])
+  views        Int      @default(0)
+  likes        Int      @default(0)
+  commentsCount Int     @default(0)
+  shares       Int      @default(0)
+  isPublished  Boolean  @default(true)
+  isApproved   Boolean  @default(true)
+  isTrending   Boolean  @default(false)
+  publishedAt  DateTime?
+  uploadedAt   DateTime @default(now())
+  metadata     Json?
+
+  creator       User                    @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  interactions  ShortVideoInteraction[]
+  comments      ShortVideoComment[]
+
+  @@map("short_videos")
+}
+
+model StoreItem {
+  id             String    @id @default(cuid())
+  name           String
+  description    String?
+  price          Float
+  currency       String    @default("USD")
+  type           String    @default("avatar") // avatar, theme, emote, badge
+  imageUrl       String
+  category       String?
+  stock          Int?
+  originalPrice  Float?
+  isActive       Boolean   @default(true)
+  isLimited      Boolean   @default(false)
+  availableUntil DateTime?
+  discount       Float     @default(0)
+  tags           String[]  @default([])
+  metadata       Json?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  purchases      Purchase[]
+
+  @@map("store_items")
+}
+
+model LiveStream {
+  id                 String    @id @default(cuid())
+  streamerId         String
+  title              String
+  description        String?
+  streamKey          String    @unique
+  playbackUrl        String?
+  rtmpUrl            String?
+  hlsUrl             String?
+  status             String    @default("idle") // idle, live, ended
+  viewerCount        Int       @default(0)
+  peakViewerCount    Int       @default(0)
+  currentViewerCount Int       @default(0)
+  finalViewerCount   Int       @default(0)
+  startTime          DateTime?
+  endTime            DateTime?
+  startedAt          DateTime?
+  endedAt            DateTime?
+  chatEnabled        Boolean   @default(true)
+  recordingEnabled   Boolean   @default(false)
+  maxViewers         Int?
+  category           String?
+  tags               String[]  @default([])
+  tenantId           String?
+  createdAt          DateTime  @default(now())
+
+  tenant       Tenant?        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  streamer     User           @relation(fields: [streamerId], references: [id], onDelete: Cascade)
+  viewers      StreamViewer[]
+  chatMessages ChatMessage[]
+  sessions     StreamSession[]
+
+  @@map("live_streams")
+}
+
+model StreamViewer {
+  id        String    @id @default(cuid())
+  streamId  String
+  userId    String
+  userAgent String?
+  ipAddress String?
+  joinedAt  DateTime  @default(now())
+  leftAt    DateTime?
+
+  stream LiveStream @relation(fields: [streamId], references: [id], onDelete: Cascade)
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("stream_viewers")
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  streamId  String
+  userId    String
+  username  String?
+  message   String
+  type      String   @default("message")
+  timestamp DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stream LiveStream @relation(fields: [streamId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
+}
+
+model TwoFactorAuth {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  secret      String
+  backupCodes String[] @default([])
+  isEnabled   Boolean   @default(false)
+  enabledAt   DateTime?
+  disabledAt  DateTime?
+  lastUsedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("two_factor_auth")
+}
+
+model UserStats {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  totalXP          Int      @default(0)
+  currentLevel     Int      @default(1)
+  watchTimeMinutes Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_stats")
+}
+
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime @default(now())
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement? @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@map("user_achievements")
+}
+
+model UserReward {
+  id         String   @id @default(cuid())
+  userId     String
+  rewardId   String
+  rewardType String
+  source     String?
+  avatarId   String?
+  claimedAt  DateTime @default(now())
+
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  avatar UserAvatar? @relation(fields: [avatarId], references: [id], onDelete: SetNull)
+
+  @@map("user_rewards")
+}
+
+model NotificationPreferences {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  streamLive    Json?
+  newFollower   Json?
+  donations     Json?
+  comments      Json?
+  systemUpdates Json?
+  promotions    Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
+}
+
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  userId    String?
+  email     String
+  ip        String
+  userAgent String?
+  success   Boolean
+  timestamp DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("login_attempts")
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("Followers", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@map("follows")
+}
+
+model ScheduledStream {
+  id                String   @id @default(cuid())
+  streamerId        String
+  title             String
+  description       String?
+  category          String   @default("gaming")
+  tags              String[] @default([])
+  scheduledAt       DateTime
+  estimatedDuration Int      @default(60)
+  status            String   @default("scheduled")
+  isRecurring       Boolean  @default(false)
+  notificationSent  Boolean  @default(false)
+  remindersSent     Boolean  @default(false)
+  actualStartTime   DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt @default(now())
+
+  streamer           User             @relation(fields: [streamerId], references: [id], onDelete: Cascade)
+  reminders          StreamReminder[]
+  scheduledReminders StreamReminder[] @relation("ScheduledReminders")
+
+  @@map("scheduled_streams")
 }
 
 // Enums
@@ -349,3 +833,587 @@ enum NotificationType {
   PAYMENT
   SUBSCRIPTION
 }
+
+model StreamBan {
+  id        String    @id @default(cuid())
+  userId    String
+  streamId  String
+  reason    String?
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@map("stream_bans")
+}
+
+model StreamModerator {
+  id        String   @id @default(cuid())
+  userId    String
+  streamId  String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@map("stream_moderators")
+}
+
+model StreamTimeout {
+  id        String   @id @default(cuid())
+  userId    String
+  streamId  String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("stream_timeouts")
+}
+
+model RateLimit {
+  key        String   @id
+  lastAction DateTime @default(now())
+
+  @@map("rate_limits")
+}
+
+model Tenant {
+  id          String   @id @default(cuid())
+  name        String
+  domain      String   @unique
+  subdomain   String   @unique
+  status      String   @default("active")
+  plan        String   @default("starter")
+  features    Json?
+  branding    Json?
+  limits      Json?
+  billing     Json?
+  settings    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       TenantUser[]
+  content     Content[]
+  liveStreams LiveStream[]
+
+  @@map("tenants")
+}
+
+model TenantUser {
+  id          String   @id @default(cuid())
+  tenantId    String
+  userId      String?
+  email       String
+  role        String   @default("member")
+  permissions Json?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_users")
+}
+
+model UserSession {
+  id        String   @id @default(cuid())
+  userId    String
+  tenantId  String?
+  duration  Int      @default(0)
+  device    String?
+  country   String?
+  ip        String?
+  pageViews Int       @default(0)
+  startTime DateTime?
+  endTime   DateTime?
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_sessions")
+}
+
+model UserReport {
+  id         String   @id @default(cuid())
+  userId     String
+  targetId       String
+  targetType     String   @default("content")
+  reason         String
+  status         String   @default("pending")
+  reportedUserId String?
+  contentType    String?
+  createdAt      DateTime @default(now())
+
+  @@map("user_reports")
+}
+
+model ModerationQueue {
+  id         String   @id @default(cuid())
+  contentId  String
+  type        String   @default("content")
+  status      String   @default("pending")
+  confidence  Float?
+  flags       Json?
+  moderatorId String?
+  createdAt   DateTime @default(now())
+
+  @@map("moderation_queue")
+}
+
+model ModerationLog {
+  id          String   @id @default(cuid())
+  contentId   String
+  action      String
+  reason      String?
+  moderatorId String?
+  contentType String?
+  createdAt   DateTime @default(now())
+
+  @@map("moderation_logs")
+}
+
+model ModerationResult {
+  id         String   @id @default(cuid())
+  contentId  String
+  isApproved Boolean  @default(true)
+  confidence Float?
+  category   String   @default("safe")
+  flags      Json?
+  createdAt  DateTime @default(now())
+
+  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@map("moderation_results")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  userId    String
+  contentId String?
+  text      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content Content? @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  userId    String
+  contentId String?
+  createdAt DateTime @default(now())
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content Content? @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@map("likes")
+}
+
+model Watchlist {
+  id        String   @id @default(cuid())
+  userId    String
+  contentId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@map("watchlist")
+}
+
+model SearchQuery {
+  id        String   @id @default(cuid())
+  query     String
+  userId    String?
+  count     Int      @default(1)
+  createdAt DateTime @default(now())
+
+  @@map("search_queries")
+}
+
+model AnalyticsReport {
+  id        String   @id @default(cuid())
+  type       String
+  reportType String?
+  data       Json
+  tenantId   String?
+  createdAt  DateTime @default(now())
+
+  @@map("analytics_reports")
+}
+
+model Rating {
+  id        String   @id @default(cuid())
+  userId    String
+  contentId String
+  value     Float
+  rating    Float?
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@map("ratings")
+}
+
+model StreamSession {
+  id        String    @id @default(cuid())
+  streamId  String
+  tenantId  String?
+  duration  Int       @default(0)
+  viewers   Int       @default(0)
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+  createdAt DateTime  @default(now())
+
+  stream LiveStream @relation(fields: [streamId], references: [id], onDelete: Cascade)
+
+  @@map("stream_sessions")
+}
+
+model UserWallet {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  balance   Float    @default(0)
+  currency  String   @default("USD")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_wallets")
+}
+
+model StreamerEarnings {
+  id                    String   @id @default(cuid())
+  streamerId            String   @unique
+  totalEarnings         Float    @default(0)
+  totalDonations        Float    @default(0)
+  totalGifts            Float    @default(0)
+  totalPrivateSessions  Float    @default(0)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  streamer User @relation(fields: [streamerId], references: [id], onDelete: Cascade)
+
+  @@map("streamer_earnings")
+}
+
+model UserPoints {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  totalPoints     Int      @default(0)
+  availablePoints Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_points")
+}
+
+model PointsTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  points      Int
+  type        String
+  source      String
+  description String?
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("points_transactions")
+}
+
+model StreamerPayout {
+  id         String   @id @default(cuid())
+  streamerId String
+  amount     Float
+  currency   String   @default("USD")
+  status     String   @default("pending")
+  createdAt  DateTime @default(now())
+
+  streamer User @relation(fields: [streamerId], references: [id], onDelete: Cascade)
+
+  @@map("streamer_payouts")
+}
+
+model Translation {
+  id         String   @id @default(cuid())
+  key        String
+  value      String
+  locale     String
+  namespace  String   @default("default")
+  context    String?
+  pluralForm String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([key, locale, namespace])
+  @@map("translations")
+}
+
+model Locale {
+  code         String   @id
+  name         String
+  nativeName   String
+  direction    String   @default("ltr")
+  currency     String   @default("USD")
+  dateFormat   String   @default("YYYY-MM-DD")
+  timeFormat   String   @default("HH:mm:ss")
+  numberFormat Json?
+  isActive     Boolean  @default(true)
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("locales")
+}
+
+model Purchase {
+  id            String    @id @default(cuid())
+  userId        String
+  itemId        String
+  quantity      Int       @default(1)
+  totalAmount   Float
+  currency      String    @default("USD")
+  paymentMethod String    @default("card")
+  status        String    @default("pending")
+  transactionId String?
+  purchasedAt   DateTime  @default(now())
+  deliveredAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item StoreItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@map("purchases")
+}
+
+model Bundle {
+  id             String    @id @default(cuid())
+  name           String
+  description    String?
+  imageUrl       String?
+  items          String[]  @default([])
+  originalPrice  Float
+  bundlePrice    Float
+  discount       Float     @default(0)
+  isLimited      Boolean   @default(false)
+  availableUntil DateTime?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("bundles")
+}
+
+model TwoFactorRecovery {
+  id        String    @id @default(cuid())
+  userId    String
+  code      String    @default("")
+  token     String    @default("")
+  isUsed    Boolean   @default(false)
+  usedAt    DateTime?
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("two_factor_recoveries")
+}
+
+model PushToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  platform  String   @default("web")
+  deviceId  String?
+  userAgent String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, deviceId])
+  @@map("push_tokens")
+}
+
+model XpTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  amount      Int
+  source      String
+  description String?
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("xp_transactions")
+}
+
+model UserAvatar {
+  id                String       @id @default(cuid())
+  name              String
+  imageUrl          String
+  price             Float        @default(0)
+  currency          String       @default("USD")
+  rarity            String       @default("common")
+  unlockRequirement Json?
+  isActive          Boolean      @default(true)
+  createdAt         DateTime     @default(now())
+  unlockedBy        UserReward[]
+
+  @@map("user_avatars")
+}
+
+model WatchTimeReward {
+  id              String                  @id @default(cuid())
+  name            String
+  description     String?
+  requiredMinutes Int                     @default(0)
+  requiredHours   Float?
+  rewardType      String
+  rewardValue     String
+  isOneTime       Boolean                 @default(true)
+  category        String                  @default("general")
+  createdAt       DateTime                @default(now())
+  claimedBy       WatchTimeRewardClaim[]
+
+  @@map("watch_time_rewards")
+}
+
+model Achievement {
+  id          String            @id @default(cuid())
+  name        String
+  description String
+  badgeUrl    String?
+  iconUrl     String?
+  rarity      String?
+  xpReward    Int               @default(50)
+  category    String            @default("general")
+  isActive    Boolean           @default(true)
+  isSecret    Boolean           @default(false)
+  requirements Json?
+  rewards     Json?
+  createdAt   DateTime          @default(now())
+  unlockedBy  UserAchievement[]
+
+  @@map("achievements")
+}
+
+model WatchTimeRewardClaim {
+  id        String   @id @default(cuid())
+  userId    String
+  rewardId  String
+  claimedAt DateTime @default(now())
+
+  reward WatchTimeReward @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+
+  @@map("watch_time_reward_claims")
+}
+
+model WalletTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  amount      Float
+  type        String
+  source      String?
+  description String?
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("wallet_transactions")
+}
+
+model StreamReminder {
+  id                String           @id @default(cuid())
+  userId            String
+  streamId          String?
+  scheduledStreamId String?
+  reminderTime      DateTime?
+  sent              Boolean          @default(false)
+  notified          Boolean          @default(false)
+  createdAt         DateTime         @default(now())
+
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stream          ScheduledStream? @relation(fields: [streamId], references: [id], onDelete: Cascade)
+  scheduledStream ScheduledStream? @relation("ScheduledReminders", fields: [scheduledStreamId], references: [id], onDelete: Cascade)
+
+  @@map("stream_reminders")
+}
+
+model ComingSoonStream {
+  id            String    @id @default(cuid())
+  streamerId    String
+  title         String
+  description   String?
+  category      String?
+  bannerUrl     String?
+  expectedAt    DateTime  @default(now())
+  estimatedDate DateTime?
+  createdAt     DateTime  @default(now())
+
+  streamer User @relation(fields: [streamerId], references: [id], onDelete: Cascade)
+
+  @@map("coming_soon_streams")
+}
+
+model SearchAnalytics {
+  id           String   @id @default(cuid())
+  query        String
+  userId       String?
+  resultsCount Int      @default(0)
+  source       String   @default("search")
+  createdAt    DateTime @default(now())
+
+  @@map("search_analytics")
+}
+
+model ShortVideoInteraction {
+  id        String   @id @default(cuid())
+  userId    String
+  shortId   String
+  type      String // like, share, view, bookmark
+  createdAt DateTime @default(now())
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  short ShortVideo @relation(fields: [shortId], references: [id], onDelete: Cascade)
+
+  @@map("short_video_interactions")
+}
+
+model ShortVideoComment {
+  id        String              @id @default(cuid())
+  userId    String
+  shortId   String
+  content   String
+  parentId  String?
+  createdAt DateTime            @default(now())
+
+  user    User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  short   ShortVideo          @relation(fields: [shortId], references: [id], onDelete: Cascade)
+  parent  ShortVideoComment?  @relation("ShortCommentReplies", fields: [parentId], references: [id])
+  replies ShortVideoComment[] @relation("ShortCommentReplies")
+
+  @@map("short_video_comments")
+}
+
+model UserInteraction {
+  id              String   @id @default(cuid())
+  userId          String
+  contentId       String
+  action          String   @default("")
+  interactionType String?
+  metadata        Json?
+  createdAt       DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_interactions")
+}
+
+

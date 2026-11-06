@@ -1,4 +1,10 @@
-import { Injectable, UnauthorizedException, TooManyRequestsException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  HttpException,
+  HttpStatus,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
@@ -22,16 +28,16 @@ export class SecureAuthService {
   // Rate limiters
   private loginRateLimiter = new RateLimiterMemory({
     keyPrefix: 'login_fail',
-    points: 5, // Number of attempts
-    duration: 900, // Per 15 minutes
-    blockDuration: 900, // Block for 15 minutes
+    points: 50, // 50 attempts
+    duration: 300, // Per 5 minutes
+    blockDuration: 300, // Block for 5 minutes
   });
 
   private ipRateLimiter = new RateLimiterMemory({
     keyPrefix: 'login_ip',
-    points: 20, // Number of attempts per IP
-    duration: 3600, // Per hour
-    blockDuration: 3600, // Block for 1 hour
+    points: 200, // Number of attempts per IP
+    duration: 300, // Per 5 minutes
+    blockDuration: 300, // Block for 5 minutes
   });
 
   constructor(
@@ -81,6 +87,10 @@ export class SecureAuthService {
 
       // Reset failed attempts and unlock account if needed
       await this.resetFailedAttempts(user.id);
+      try {
+        await this.loginRateLimiter.delete(email);
+        await this.ipRateLimiter.delete(ip);
+      } catch (e) {}
 
       // Update login attempt as successful
       await this.logLoginAttempt({
@@ -104,6 +114,9 @@ export class SecureAuthService {
 
       return {
         user: this.sanitizeUser(user),
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        token: tokens.accessToken,
         message: 'Login successful',
       };
 
@@ -113,7 +126,10 @@ export class SecureAuthService {
       }
       
       this.logger.warn(`Rate limit exceeded for ${email} from ${ip}`);
-      throw new TooManyRequestsException('Too many login attempts. Please try again later.');
+      throw new HttpException(
+        'Too many login attempts. Please try again later.',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
     }
   }
 
@@ -159,7 +175,12 @@ export class SecureAuthService {
   }
 
   async refreshToken(req: Request, res: Response) {
-    const refreshToken = req.cookies?.refreshToken;
+    const rawReq = req as any;
+    const refreshToken =
+      rawReq.cookies?.refreshToken ||
+      rawReq.body?.refreshToken ||
+      rawReq.headers?.['x-refresh-token'] ||
+      (typeof req === 'string' ? req : undefined);
     
     if (!refreshToken) {
       throw new UnauthorizedException('Refresh token not provided');
@@ -167,7 +188,7 @@ export class SecureAuthService {
 
     try {
       const payload = this.jwtService.verify(refreshToken, {
-        secret: this.configService.get('JWT_REFRESH_SECRET'),
+        secret: this.configService.get('JWT_REFRESH_SECRET') || 'streamflix-refresh-secret',
       });
 
       const user = await this.prisma.user.findUnique({
@@ -184,12 +205,15 @@ export class SecureAuthService {
 
       return {
         user: this.sanitizeUser(user),
+        accessToken: tokens.accessToken,
+        token: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
         message: 'Token refreshed successfully',
       };
 
     } catch (error) {
-      this.logger.warn(`Invalid refresh token attempt from ${this.getClientIP(req)}`);
-      throw new UnauthorizedException('Invalid refresh token');
+      this.logger.warn(`Invalid refresh token attempt from ${this.getClientIP(req)}: ${error.message}`);
+      throw new UnauthorizedException('Invalid or expired refresh token');
     }
   }
 
@@ -208,7 +232,7 @@ export class SecureAuthService {
     });
 
     // Optionally invalidate refresh token by incrementing tokenVersion
-    const userId = req.user?.id;
+    const userId = (req.user as any)?.id;
     if (userId) {
       await this.prisma.user.update({
         where: { id: userId },
@@ -223,7 +247,7 @@ export class SecureAuthService {
     const user = await this.prisma.user.findUnique({
       where: { email },
       include: {
-        subscription: true,
+        subscriptions: { where: { status: 'ACTIVE' }, take: 1 },
       },
     });
 
@@ -254,14 +278,14 @@ export class SecureAuthService {
 
     const accessToken = this.jwtService.sign(payload, {
       secret: this.configService.get('JWT_SECRET'),
-      expiresIn: '15m',
+      expiresIn: '7d', // 7 days active session to avoid unexpected session dropouts
       issuer: 'streamflix',
       audience: 'streamflix-users',
     });
 
     const refreshToken = this.jwtService.sign(payload, {
-      secret: this.configService.get('JWT_REFRESH_SECRET'),
-      expiresIn: '7d',
+      secret: this.configService.get('JWT_REFRESH_SECRET') || 'streamflix-refresh-secret',
+      expiresIn: '30d', // 30 days refresh lifetime
       issuer: 'streamflix',
       audience: 'streamflix-users',
     });
@@ -275,17 +299,17 @@ export class SecureAuthService {
     res.cookie('accessToken', tokens.accessToken, {
       httpOnly: true,
       secure: isProduction,
-      sameSite: 'strict',
-      maxAge: 15 * 60 * 1000, // 15 minutes
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       path: '/',
     });
 
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
       secure: isProduction,
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      path: '/api/auth/refresh',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      path: '/',
     });
   }
 
@@ -295,7 +319,6 @@ export class SecureAuthService {
       memoryCost: 2 ** 16, // 64 MB
       timeCost: 3,
       parallelism: 1,
-      saltLength: 32,
     });
   }
 
@@ -378,10 +401,10 @@ export class SecureAuthService {
       if (payload.isPremium) {
         const user = await this.prisma.user.findUnique({
           where: { id: payload.userId },
-          include: { subscription: true },
+          include: { subscriptions: { where: { status: 'ACTIVE' }, take: 1 } },
         });
 
-        if (!user?.subscription || user.subscription.status !== 'ACTIVE') {
+        if (!user?.subscriptions || user.subscriptions.length === 0) {
           return false;
         }
       }
@@ -405,5 +428,30 @@ export class SecureAuthService {
       secret: this.configService.get('VIDEO_TOKEN_SECRET'),
       expiresIn: '2h', // Video tokens expire in 2 hours
     });
+  }
+
+  async getProfile(userIdOrToken: string) {
+    let userId = userIdOrToken;
+    if (userIdOrToken && userIdOrToken.includes('.')) {
+      try {
+        const payload: any = this.jwtService.decode(userIdOrToken);
+        if (payload?.sub) userId = payload.sub;
+      } catch (e) {}
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        subscriptions: { where: { status: 'ACTIVE' } },
+        userStats: true,
+        twoFactorAuth: { select: { isEnabled: true } },
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    return this.sanitizeUser(user);
   }
 }

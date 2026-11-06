@@ -182,7 +182,7 @@ export default function SubscriptionPage() {
                 <div>
                   <h3 className="text-white font-semibold mb-1">Current Plan</h3>
                   <p className="text-gray-300">
-                    {user.subscription.type === 'premium' ? (
+                    {user?.subscription?.type === 'premium' ? (
                       <span className="flex items-center">
                         <Crown className="h-4 w-4 text-yellow-500 mr-2" />
                         Premium Plan
@@ -198,11 +198,11 @@ export default function SubscriptionPage() {
                 <div className="text-right">
                   <p className="text-sm text-gray-400">Status</p>
                   <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                    user.subscription.status === 'active'
+                    user?.subscription?.status === 'active'
                       ? 'bg-green-600 text-green-100'
                       : 'bg-gray-600 text-gray-100'
                   }`}>
-                    {user.subscription.status}
+                    {user?.subscription?.status || 'Active'}
                   </span>
                 </div>
               </div>

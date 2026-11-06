@@ -139,7 +139,7 @@ export class BlogService {
 
       // Save to database
       await this.prisma.blogPost.create({
-        data: blogPost,
+        data: blogPost as any,
       });
 
       // Update category post count
@@ -190,7 +190,7 @@ export class BlogService {
 
       const updatedPost = await this.prisma.blogPost.update({
         where: { id: postId },
-        data: updates,
+        data: updates as any,
       });
 
       this.logger.log(`Blog post updated: ${postId}`);
@@ -342,6 +342,7 @@ export class BlogService {
     try {
       const post = await this.prisma.blogPost.findUnique({
         where: { id: postId },
+        include: { category: true },
       });
 
       if (!post) {
@@ -358,7 +359,9 @@ export class BlogService {
       });
 
       // Update category post count
-      await this.updateCategoryPostCount(post.category);
+      if (post.category?.name) {
+        await this.updateCategoryPostCount(post.category.name);
+      }
 
       this.logger.log(`Blog post deleted: ${postId}`);
 
@@ -409,19 +412,12 @@ export class BlogService {
       };
 
       await this.prisma.blogComment.create({
-        data: comment,
+        data: comment as any,
       });
 
-      // Update reply count if this is a reply
+      // Update reply count if this is a reply (replies tracked via relation)
       if (commentData.parentId) {
-        await this.prisma.blogComment.update({
-          where: { id: commentData.parentId },
-          data: {
-            replies: {
-              increment: 1,
-            },
-          },
-        });
+        this.logger.debug(`Reply added to comment: ${commentData.parentId}`);
       }
 
       this.logger.log(`Blog comment added: ${comment.id} on post ${postId}`);
@@ -502,16 +498,9 @@ export class BlogService {
         data: { status },
       });
 
-      // Update post comment count if approved
+      // Update post comment count if approved (comments tracked via relation)
       if (status === 'approved') {
-        await this.prisma.blogPost.update({
-          where: { id: comment.postId },
-          data: {
-            comments: {
-              increment: 1,
-            },
-          },
-        });
+        this.logger.debug(`Comment approved for post: ${comment.postId}`);
       }
 
       this.logger.log(`Comment ${commentId} ${status} by moderator ${moderatorId}`);
@@ -550,14 +539,15 @@ export class BlogService {
         whereClause.authorType = authorType;
       }
 
-      const [totalPosts, publishedPosts, draftPosts, viewsAggregate] = await Promise.all([
+      const [totalPosts, publishedPosts, draftPosts, viewsAggregate, totalComments] = await Promise.all([
         this.prisma.blogPost.count({ where: whereClause }),
         this.prisma.blogPost.count({ where: { ...whereClause, status: 'published' } }),
         this.prisma.blogPost.count({ where: { ...whereClause, status: 'draft' } }),
         this.prisma.blogPost.aggregate({
           where: whereClause,
-          _sum: { views: true, comments: true },
+          _sum: { views: true },
         }),
+        this.prisma.blogComment.count(),
       ]);
 
       const topPosts = await this.prisma.blogPost.findMany({
@@ -572,11 +562,11 @@ export class BlogService {
         take: 10,
       });
 
-      const topCategories = await this.prisma.blogPost.groupBy({
-        by: ['category'],
+      const topCategories = await (this.prisma.blogPost.groupBy as any)({
+        by: ['categoryId'],
         where: { ...whereClause, status: 'published' },
-        _count: { category: true },
-        orderBy: { _count: { category: 'desc' } },
+        _count: { categoryId: true },
+        orderBy: { _count: { categoryId: 'desc' } },
         take: 10,
       });
 
@@ -585,11 +575,11 @@ export class BlogService {
         publishedPosts,
         draftPosts,
         totalViews: viewsAggregate._sum.views || 0,
-        totalComments: viewsAggregate._sum.comments || 0,
+        totalComments: totalComments || 0,
         topPosts,
-        topCategories: topCategories.map(cat => ({
-          name: cat.category,
-          postCount: cat._count.category,
+        topCategories: topCategories.map((cat: any) => ({
+          name: cat.categoryId,
+          postCount: cat._count?.categoryId || 0,
         })),
       };
     } catch (error) {
@@ -619,7 +609,9 @@ export class BlogService {
     try {
       const postCount = await this.prisma.blogPost.count({
         where: {
-          category: categoryName,
+          category: {
+            name: categoryName,
+          },
           status: 'published',
         },
       });

@@ -53,7 +53,7 @@ export class EmailService {
 
     switch (emailProvider) {
       case 'sendgrid':
-        this.transporter = nodemailer.createTransporter({
+        this.transporter = (nodemailer as any).createTransport({
           service: 'SendGrid',
           auth: {
             user: 'apikey',
@@ -63,7 +63,7 @@ export class EmailService {
         break;
 
       case 'ses':
-        this.transporter = nodemailer.createTransporter({
+        this.transporter = (nodemailer as any).createTransport({
           SES: {
             aws: {
               accessKeyId: this.configService.get('AWS_ACCESS_KEY_ID'),
@@ -76,7 +76,7 @@ export class EmailService {
 
       case 'smtp':
       default:
-        this.transporter = nodemailer.createTransporter({
+        this.transporter = (nodemailer as any).createTransport({
           host: this.configService.get('SMTP_HOST'),
           port: this.configService.get('SMTP_PORT', 587),
           secure: this.configService.get('SMTP_SECURE', false),

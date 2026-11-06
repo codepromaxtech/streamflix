@@ -2,44 +2,63 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { Play, Info, Volume2, VolumeX } from 'lucide-react'
+import { Play, Info, Volume2, VolumeX, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useVideoPlayer } from '@/contexts/video-player-context'
-
-// Mock featured content - in production this would come from your API
-const featuredContent = {
-  id: '1',
-  title: 'Stranger Things',
-  description: 'When a young boy vanishes, a small town uncovers a mystery involving secret experiments, terrifying supernatural forces, and one strange little girl.',
-  backdrop: '/images/stranger-things-backdrop.jpg',
-  trailer: '/videos/stranger-things-trailer.mp4',
-  videoUrl: '/videos/stranger-things-s1e1.mp4',
-  duration: 3600,
-  releaseDate: '2016-07-15',
-  rating: 8.7,
-  maturityRating: 'TV-14',
-  genre: ['Drama', 'Fantasy', 'Horror'],
-  cast: [],
-  director: ['The Duffer Brothers'],
-  producer: ['Shawn Levy'],
-  language: 'English',
-  subtitles: [],
-  audioTracks: [],
-  qualityLevels: [],
-  type: 'series' as const,
-  season: 1,
-  episode: 1,
-  isExclusive: true,
-  isPremium: false,
-  tags: ['trending', 'popular'],
-  createdAt: '2024-01-01',
-  updatedAt: '2024-01-01',
-}
+import { VideoContent } from '@/types/video'
+import { mapDbItemToVideoContent, extractItemsFromApiResponse } from '@/lib/content-mapper'
 
 export function HeroSection() {
+  const [content, setContent] = useState<VideoContent | null>(null)
+  const [loading, setLoading] = useState(true)
   const [isMuted, setIsMuted] = useState(true)
   const [isTrailerPlaying, setIsTrailerPlaying] = useState(false)
   const { playVideo } = useVideoPlayer()
+
+  useEffect(() => {
+    const fetchHeroContent = async () => {
+      try {
+        setLoading(true)
+        // 1. Try featured endpoint
+        const res = await fetch('/api/content/featured', { credentials: 'include' })
+        if (res.ok) {
+          const data = await res.json()
+          const items = extractItemsFromApiResponse(data)
+          if (items.length > 0) {
+            setContent(mapDbItemToVideoContent(items[0]))
+            return
+          }
+        }
+
+        // 2. Fallback to trending
+        const trendingRes = await fetch('/api/content/trending', { credentials: 'include' })
+        if (trendingRes.ok) {
+          const data = await trendingRes.json()
+          const items = extractItemsFromApiResponse(data)
+          if (items.length > 0) {
+            setContent(mapDbItemToVideoContent(items[0]))
+            return
+          }
+        }
+
+        // 3. Fallback to latest published item
+        const latestRes = await fetch('/api/content?limit=1', { credentials: 'include' })
+        if (latestRes.ok) {
+          const data = await latestRes.json()
+          const items = extractItemsFromApiResponse(data)
+          if (items.length > 0) {
+            setContent(mapDbItemToVideoContent(items[0]))
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load hero content from database:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchHeroContent()
+  }, [])
 
   const handlePlayTrailer = () => {
     setIsTrailerPlaying(true)
@@ -47,59 +66,83 @@ export function HeroSection() {
   }
 
   const handlePlayContent = () => {
-    playVideo(featuredContent)
+    if (content) {
+      playVideo(content)
+    }
+  }
+
+  if (loading || !content) {
+    return (
+      <section className="relative min-h-[560px] h-[82vh] max-h-[820px] bg-netflix-black flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-t from-netflix-black via-gray-900/40 to-transparent animate-pulse" />
+        <div className="relative z-10 text-center space-y-4 max-w-xl px-4">
+          <div className="h-6 w-32 bg-gray-800 rounded-full mx-auto animate-pulse" />
+          <div className="h-12 w-3/4 bg-gray-800 rounded-xl mx-auto animate-pulse" />
+          <div className="h-4 w-full bg-gray-800/60 rounded mx-auto animate-pulse" />
+        </div>
+      </section>
+    )
   }
 
   return (
-    <section className="relative h-screen overflow-hidden">
+    <section className="relative min-h-[560px] h-[82vh] max-h-[820px] overflow-hidden">
       {/* Background Video/Image */}
       <div className="absolute inset-0">
-        {isTrailerPlaying ? (
+        {isTrailerPlaying && content.trailer ? (
           <video
             className="w-full h-full object-cover"
             autoPlay
             muted={isMuted}
             loop
-            poster={featuredContent.backdrop}
+            poster={content.backdrop || content.thumbnail}
           >
-            <source src={featuredContent.trailer} type="video/mp4" />
+            <source src={content.trailer} type="video/mp4" />
           </video>
         ) : (
           <Image
-            src={featuredContent.backdrop}
-            alt={featuredContent.title}
+            src={content.backdrop || content.thumbnail || '/placeholder-backdrop.svg'}
+            alt={content.title}
             fill
             className="object-cover"
             priority
           />
         )}
-        
-        {/* Gradient Overlay */}
+
+        {/* Gradient Overlays */}
         <div className="absolute inset-0 hero-gradient" />
+        <div className="absolute inset-0 bg-gradient-to-t from-netflix-black via-netflix-black/25 to-transparent pointer-events-none" />
       </div>
 
       {/* Content */}
       <div className="relative z-10 h-full flex items-center">
         <div className="container mx-auto px-4">
           <div className="max-w-2xl">
+            {/* Tag */}
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-netflix-red/20 border border-netflix-red/30 backdrop-blur-md mb-3">
+              <Sparkles className="h-3.5 w-3.5 text-netflix-red" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-netflix-red">
+                StreamFlix Spotlight
+              </span>
+            </div>
+
             {/* Title */}
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 animate-fade-in">
-              {featuredContent.title}
+            <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 animate-fade-in drop-shadow-lg">
+              {content.title}
             </h1>
 
             {/* Metadata */}
-            <div className="flex items-center space-x-4 text-white/80 mb-4 animate-fade-in">
-              <span className="bg-netflix-red px-2 py-1 text-xs font-semibold rounded">
-                {featuredContent.maturityRating}
+            <div className="flex flex-wrap items-center gap-3 text-white/80 mb-4 animate-fade-in text-xs sm:text-sm">
+              <span className="bg-netflix-red px-2 py-0.5 text-xs font-semibold rounded text-white">
+                {content.maturityRating}
               </span>
-              <span>{new Date(featuredContent.releaseDate).getFullYear()}</span>
-              <span>⭐ {featuredContent.rating}/10</span>
-              <span>{featuredContent.genre.join(' • ')}</span>
+              <span>{new Date(content.releaseDate).getFullYear()}</span>
+              <span className="text-yellow-400 font-semibold">⭐ {content.rating.toFixed(1)}/10</span>
+              <span>{content.genre.join(' • ')}</span>
             </div>
 
             {/* Description */}
-            <p className="text-white/90 text-lg mb-8 max-w-xl animate-fade-in">
-              {featuredContent.description}
+            <p className="text-white/90 text-sm sm:text-base md:text-lg mb-8 max-w-xl animate-fade-in line-clamp-3 leading-relaxed drop-shadow">
+              {content.description}
             </p>
 
             {/* Action Buttons */}
@@ -111,7 +154,7 @@ export function HeroSection() {
                 className="flex items-center space-x-2"
               >
                 <Play className="h-5 w-5 fill-current" />
-                <span>Play</span>
+                <span>Play Now</span>
               </Button>
 
               <Button
@@ -121,7 +164,7 @@ export function HeroSection() {
                 className="flex items-center space-x-2"
               >
                 <Info className="h-5 w-5" />
-                <span>More Info</span>
+                <span>Watch Trailer</span>
               </Button>
 
               {/* Mute/Unmute Button */}
@@ -145,9 +188,9 @@ export function HeroSection() {
       </div>
 
       {/* Scroll Indicator */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-        <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center">
-          <div className="w-1 h-3 bg-white/50 rounded-full mt-2 animate-pulse" />
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 animate-bounce z-10 pointer-events-none">
+        <div className="w-5 h-8 border-2 border-white/30 rounded-full flex justify-center">
+          <div className="w-1 h-2 bg-white/50 rounded-full mt-1.5 animate-pulse" />
         </div>
       </div>
     </section>

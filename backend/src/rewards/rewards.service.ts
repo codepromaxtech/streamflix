@@ -426,7 +426,8 @@ export class RewardsService {
         throw new BadRequestException('Avatar not found or not available');
       }
 
-      if (avatar.unlockRequirement.type !== 'purchase') {
+      const unlockReq = avatar.unlockRequirement as any;
+      if (unlockReq?.type !== 'purchase') {
         throw new BadRequestException('Avatar cannot be purchased');
       }
 
@@ -435,7 +436,7 @@ export class RewardsService {
         where: { userId },
       });
 
-      const price = avatar.unlockRequirement.value;
+      const price = unlockReq?.value || 0;
       if (!userWallet || userWallet.balance < price) {
         throw new BadRequestException('Insufficient balance');
       }
@@ -472,17 +473,9 @@ export class RewardsService {
       const rewards: UserReward[] = [];
       
       // Get achievements that match the type and haven't been unlocked
-      const availableAchievements = await this.prisma.achievement.findMany({
+      const candidateAchievements = await this.prisma.achievement.findMany({
         where: {
           isActive: true,
-          requirements: {
-            some: {
-              type,
-              value: {
-                lte: value,
-              },
-            },
-          },
           NOT: {
             unlockedBy: {
               some: {
@@ -491,6 +484,11 @@ export class RewardsService {
             },
           },
         },
+      });
+
+      const availableAchievements = candidateAchievements.filter(ach => {
+        const reqs = Array.isArray(ach.requirements) ? (ach.requirements as any[]) : [];
+        return reqs.some((r: any) => r.type === type && r.value <= value);
       });
 
       for (const achievement of availableAchievements) {
@@ -905,8 +903,14 @@ export class RewardsService {
     for (const reward of watchTimeRewards) {
       await this.prisma.watchTimeReward.upsert({
         where: { id: reward.id },
-        update: reward,
-        create: reward,
+        update: {
+          ...reward,
+          rewardValue: String(reward.rewardValue),
+        } as any,
+        create: {
+          ...reward,
+          rewardValue: String(reward.rewardValue),
+        } as any,
       });
     }
   }

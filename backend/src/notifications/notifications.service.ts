@@ -127,7 +127,7 @@ export class NotificationsService {
 
       // Save to database
       await this.prisma.notification.create({
-        data: notification,
+        data: notification as any,
       });
 
       // Send immediately if not scheduled
@@ -324,12 +324,12 @@ export class NotificationsService {
     try {
       const updatedPreferences = await this.prisma.notificationPreferences.upsert({
         where: { userId },
-        update: preferences,
+        update: preferences as any,
         create: {
           userId,
           ...this.getDefaultPreferences(),
           ...preferences,
-        },
+        } as any,
       });
 
       this.logger.log(`Notification preferences updated for user ${userId}`);
@@ -363,7 +363,6 @@ export class NotificationsService {
           platform: deviceInfo.platform,
           userAgent: deviceInfo.userAgent,
           isActive: true,
-          updatedAt: new Date(),
         },
         create: {
           userId,
@@ -581,7 +580,7 @@ export class NotificationsService {
           data: {
             userId,
             ...this.getDefaultPreferences(),
-          },
+          } as any,
         });
       }
 
@@ -690,20 +689,12 @@ export class NotificationsService {
 
         results.push({ channel: channel.type, success, error });
 
-        // Update channel status
+        // Update notification status
         await this.prisma.notification.update({
           where: { id: notification.id },
           data: {
-            channels: {
-              updateMany: {
-                where: { type: channel.type },
-                data: {
-                  status: success ? 'sent' : 'failed',
-                  sentAt: success ? new Date() : undefined,
-                  error,
-                },
-              },
-            },
+            status: success ? 'sent' : 'failed',
+            sentAt: success ? new Date() : undefined,
           },
         });
       }

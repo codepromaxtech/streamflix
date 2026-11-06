@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#141414"/>
+      <stop offset="50%" stop-color="#1f1f23"/>
+      <stop offset="100%" stop-color="#0a0a0c"/>
+    </linearGradient>
+    <linearGradient id="redGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E50914" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#B20710" stop-opacity="0.05"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="600" fill="url(#bg)"/>
+  <rect width="400" height="600" fill="url(#redGlow)"/>
+  <circle cx="200" cy="270" r="54" fill="#E50914" fill-opacity="0.12"/>
+  <g transform="translate(170, 240)" fill="none" stroke="#E50914" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="2" y="2" width="56" height="56" rx="8"/>
+    <polygon points="24,18 42,30 24,42" fill="#E50914" stroke="none"/>
+  </g>
+  <text x="200" y="360" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="700" fill="#ffffff" text-anchor="middle" letter-spacing="2">STREAMFLIX</text>
+  <text x="200" y="385" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="500" fill="#888888" text-anchor="middle" letter-spacing="1">ORIGINAL RELEASE</text>
+</svg>

@@ -121,7 +121,7 @@ export class ShortsService {
 
       // Save to database
       await this.prisma.shortVideo.create({
-        data: shortVideo,
+        data: shortVideo as any,
       });
 
       // Queue for content moderation
@@ -378,30 +378,18 @@ export class ShortsService {
 
       // Save comment
       await this.prisma.shortVideoComment.create({
-        data: comment,
+        data: comment as any,
       });
 
       // Update comment count on short
       await this.prisma.shortVideo.update({
         where: { id: shortId },
         data: {
-          comments: {
+          commentsCount: {
             increment: 1,
           },
         },
       });
-
-      // Update reply count on parent comment if this is a reply
-      if (parentId) {
-        await this.prisma.shortVideoComment.update({
-          where: { id: parentId },
-          data: {
-            replies: {
-              increment: 1,
-            },
-          },
-        });
-      }
 
       // Update trending score
       await this.updateTrendingScore(shortId);

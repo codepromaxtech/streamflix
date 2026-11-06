@@ -34,43 +34,51 @@ export function Header() {
   ]
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-netflix-black/95 backdrop-blur-sm border-b border-gray-800">
+    <header className="fixed top-0 left-0 right-0 z-50 glass-nav transition-all duration-300">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div className="flex items-center space-x-8">
-            <Link href="/" className="flex items-center">
-              <div className="text-netflix-red text-2xl font-bold">
-                StreamFlix
-              </div>
+          <div className="flex items-center space-x-6 lg:space-x-8">
+            <Link href="/" className="flex items-center group">
+              <span className="text-netflix-red text-2xl font-extrabold tracking-wider transition-transform group-hover:scale-105">
+                STREAMFLIX
+              </span>
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-6">
+            <nav className="hidden md:flex items-center space-x-5 lg:space-x-6">
               {navigationItems.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="text-white hover:text-gray-300 transition-colors text-sm font-medium"
+                  className="text-gray-300 hover:text-white transition-colors text-sm font-medium tracking-wide"
                 >
                   {item.name}
                 </Link>
               ))}
+              {user?.role === 'ADMIN' && (
+                <Link
+                  href="/admin"
+                  className="text-netflix-red hover:text-red-400 transition-colors text-sm font-semibold tracking-wide flex items-center gap-1 bg-red-950/40 px-2.5 py-1 rounded-md border border-red-800/50"
+                >
+                  Admin
+                </Link>
+              )}
             </nav>
           </div>
 
           {/* Right Side Actions */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-3">
             {/* Search */}
             <div className="relative">
               {isSearchOpen ? (
-                <form onSubmit={handleSearch} className="flex items-center">
+                <form onSubmit={handleSearch} className="flex items-center animate-fade-in">
                   <Input
                     type="text"
-                    placeholder="Search movies, shows..."
+                    placeholder="Search titles..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-64 bg-black/50 border-gray-600 text-white placeholder-gray-400"
+                    className="w-36 xs:w-44 sm:w-60 md:w-64 h-9 bg-black/70 border-gray-700 text-white placeholder-gray-400 text-xs sm:text-sm rounded-full px-4 focus-visible:ring-netflix-red"
                     autoFocus
                   />
                   <Button
@@ -78,7 +86,7 @@ export function Header() {
                     variant="ghost"
                     size="icon"
                     onClick={() => setIsSearchOpen(false)}
-                    className="ml-2"
+                    className="ml-1 h-8 w-8 text-gray-400 hover:text-white"
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -88,9 +96,10 @@ export function Header() {
                   variant="ghost"
                   size="icon"
                   onClick={() => setIsSearchOpen(true)}
-                  className="text-white hover:text-gray-300"
+                  aria-label="Open search"
+                  className="text-white hover:text-gray-300 h-9 w-9 rounded-full"
                 >
-                  <Search className="h-5 w-5" />
+                  <Search className="h-4 w-4" />
                 </Button>
               )}
             </div>
@@ -144,6 +153,15 @@ export function Header() {
                   {item.name}
                 </Link>
               ))}
+              {user?.role === 'ADMIN' && (
+                <Link
+                  href="/admin"
+                  className="text-netflix-red font-semibold hover:text-red-400 transition-colors px-2 py-1"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Admin Dashboard
+                </Link>
+              )}
             </nav>
           </div>
         )}

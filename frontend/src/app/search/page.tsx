@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Search, Filter, X, ChevronDown } from 'lucide-react'
 
@@ -41,7 +41,7 @@ const genres = [
   'Family', 'History', 'Music', 'War', 'Western', 'Biography'
 ]
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams()
   const initialQuery = searchParams.get('q') || ''
 
@@ -157,7 +157,7 @@ export default function SearchPage() {
         <div className="container mx-auto px-4">
           {/* Search Header */}
           <div className="mb-8">
-            <div className="max-w-2xl mx-auto">
+            <div className="relative max-w-2xl mx-auto">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                 <Input
@@ -449,3 +449,18 @@ export default function SearchPage() {
     </div>
   )
 }
+
+export default function SearchPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-netflix-black flex items-center justify-center text-white">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-netflix-red" />
+        </div>
+      }
+    >
+      <SearchContent />
+    </Suspense>
+  )
+}
+

@@ -439,7 +439,7 @@ const PrivateSessionModal: React.FC<PrivateSessionModalProps> = ({
                             mode="single"
                             selected={scheduledDate}
                             onSelect={setScheduledDate}
-                            disabled={(date) => date < new Date()}
+                            disabled={(date: Date) => date < new Date()}
                             initialFocus
                           />
                         </PopoverContent>
@@ -535,7 +535,7 @@ const PrivateSessionModal: React.FC<PrivateSessionModalProps> = ({
                 <h3 className="text-xl font-semibold mb-2">Session Confirmed!</h3>
                 <p className="text-muted-foreground">
                   Your private session with {streamerName} has been scheduled successfully.
-                  You'll receive a notification when it's time to join.
+                  You&apos;ll receive a notification when it&apos;s time to join.
                 </p>
               </div>
 

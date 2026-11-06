@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
@@ -87,7 +87,8 @@ export class AdvancedSearchService {
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
-    private elasticsearchService: ElasticsearchService,
+    @Inject(ElasticsearchService)
+    private elasticsearchService: any,
   ) {
     this.initializeSearchIndex();
   }
@@ -232,7 +233,7 @@ export class AdvancedSearchService {
       });
 
       // Get category suggestions
-      const categories = await this.prisma.content.groupBy({
+      const categories = await (this.prisma.content.groupBy as any)({
         by: ['category'],
         where: {
           category: {
@@ -268,7 +269,7 @@ export class AdvancedSearchService {
 
   async getTrendingSearches(limit: number = 10): Promise<SearchSuggestion[]> {
     try {
-      const trending = await this.prisma.searchAnalytics.groupBy({
+      const trending = await (this.prisma.searchAnalytics.groupBy as any)({
         by: ['query'],
         where: {
           timestamp: {
@@ -659,7 +660,7 @@ export class AdvancedSearchService {
         creator: source.creator,
         metadata: source.metadata,
         relevanceScore: hit._score,
-        highlights: Object.values(highlights).flat(),
+        highlights: Object.values(highlights).flat() as string[],
       });
     }
 

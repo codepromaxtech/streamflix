@@ -184,11 +184,11 @@ export class TenantService {
           subdomain: tenant.subdomain,
           status: tenant.status,
           plan: tenant.plan,
-          features: tenant.features,
-          branding: tenant.branding,
-          limits: tenant.limits,
-          billing: tenant.billing,
-          settings: tenant.settings,
+          features: tenant.features as any,
+          branding: tenant.branding as any,
+          limits: tenant.limits as any,
+          billing: tenant.billing as any,
+          settings: tenant.settings as any,
         },
       });
 
@@ -236,7 +236,7 @@ export class TenantService {
       });
 
       if (tenantData) {
-        tenant = tenantData as TenantConfig;
+        tenant = tenantData as unknown as TenantConfig;
         this.tenantCache.set(domain, tenant);
         return tenant;
       }
@@ -270,8 +270,13 @@ export class TenantService {
         where: { id: tenantId },
         data: {
           ...updates,
+          features: updates.features as any,
+          branding: updates.branding as any,
+          limits: updates.limits as any,
+          billing: updates.billing as any,
+          settings: updates.settings as any,
           updatedAt: new Date(),
-        },
+        } as any,
       });
 
       // Update cache
@@ -397,7 +402,7 @@ export class TenantService {
       }
 
       if (requiredPermission) {
-        return tenantUser.permissions.includes(requiredPermission) || 
+        return (tenantUser.permissions as any)?.includes?.(requiredPermission) || 
                tenantUser.role === 'owner';
       }
 

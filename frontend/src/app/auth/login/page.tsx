@@ -173,21 +173,12 @@ export default function LoginPage() {
               </Link>
             </p>
           </div>
-
-          {/* Demo Accounts */}
-          <div className="mt-6 p-4 bg-gray-800/50 rounded border border-gray-700">
-            <p className="text-gray-300 text-sm font-semibold mb-2">Demo Accounts:</p>
-            <div className="space-y-1 text-xs text-gray-400">
-              <p>Free User: demo@streamflix.com / password123</p>
-              <p>Premium User: premium@streamflix.com / password123</p>
-            </div>
-          </div>
         </div>
 
         {/* Footer */}
         <div className="text-center mt-8 text-gray-500 text-sm">
           <p>
-            This page is protected by Google reCAPTCHA to ensure you're not a bot.{' '}
+            This page is protected by Google reCAPTCHA to ensure you&apos;re not a bot.{' '}
             <Link href="/privacy" className="text-blue-400 hover:underline">
               Learn more
             </Link>

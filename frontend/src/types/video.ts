@@ -69,7 +69,7 @@ export interface VideoPlayerContextType {
   playbackRate: number
   subtitles: string | null
   isBuffering: boolean
-  playerRef: React.RefObject<any>
+  playerRef: React.MutableRefObject<any>
   playVideo: (video: VideoContent) => void
   pauseVideo: () => void
   stopVideo: () => void
@@ -82,6 +82,7 @@ export interface VideoPlayerContextType {
   toggleSubtitles: (language: string | null) => void
   updateProgress: (time: number, duration: number) => void
   setIsBuffering: (buffering: boolean) => void
+  setIsPlaying?: (playing: boolean) => void
 }
 
 export interface ContentCategory {

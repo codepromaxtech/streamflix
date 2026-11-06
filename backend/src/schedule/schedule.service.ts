@@ -119,7 +119,7 @@ export class ScheduleService {
 
       // Save to database
       await this.prisma.scheduledStream.create({
-        data: scheduledStream,
+        data: scheduledStream as any,
       });
 
       // Create recurring instances if applicable
@@ -323,7 +323,7 @@ export class ScheduleService {
       const streamKey = `${scheduledStreamId}_${Date.now()}`;
 
       // Notify followers
-      await this.notifyFollowersStreamStarted(scheduledStream);
+      await this.notifyFollowersStreamStarted(scheduledStream as any);
 
       this.logger.log(`Scheduled stream started: ${scheduledStreamId}`);
 
@@ -584,7 +584,7 @@ export class ScheduleService {
           scheduledAt: instanceDate,
           createdAt: new Date(),
           updatedAt: new Date(),
-        },
+        } as any,
       });
     }
   }

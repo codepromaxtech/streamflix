@@ -1,167 +1,147 @@
 'use client'
 
-import { useState } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ContentCard } from '@/components/content-card'
 import { VideoContent } from '@/types/video'
-
-// Mock data - in production this would come from your API
-const mockFeaturedContent: VideoContent[] = [
-  {
-    id: '2',
-    title: 'The Crown',
-    description: 'Follows the political rivalries and romance of Queen Elizabeth II\'s reign.',
-    thumbnail: '/images/the-crown-thumb.jpg',
-    backdrop: '/images/the-crown-backdrop.jpg',
-    videoUrl: '/videos/the-crown-s1e1.mp4',
-    duration: 3600,
-    releaseDate: '2016-11-04',
-    rating: 8.7,
-    maturityRating: 'TV-MA',
-    genre: ['Drama', 'History'],
-    cast: [],
-    director: ['Peter Morgan'],
-    producer: ['Andy Harries'],
-    language: 'English',
-    subtitles: [],
-    audioTracks: [],
-    qualityLevels: [],
-    type: 'series',
-    isExclusive: true,
-    isPremium: true,
-    tags: ['award-winning', 'drama'],
-    createdAt: '2024-01-01',
-    updatedAt: '2024-01-01',
-  },
-  {
-    id: '3',
-    title: 'Squid Game',
-    description: 'Hundreds of cash-strapped players accept a strange invitation to compete in children\'s games.',
-    thumbnail: '/images/squid-game-thumb.jpg',
-    backdrop: '/images/squid-game-backdrop.jpg',
-    videoUrl: '/videos/squid-game-s1e1.mp4',
-    duration: 3600,
-    releaseDate: '2021-09-17',
-    rating: 8.0,
-    maturityRating: 'TV-MA',
-    genre: ['Thriller', 'Drama'],
-    cast: [],
-    director: ['Hwang Dong-hyuk'],
-    producer: ['Kim Ji-yeon'],
-    language: 'Korean',
-    subtitles: [],
-    audioTracks: [],
-    qualityLevels: [],
-    type: 'series',
-    isExclusive: true,
-    isPremium: false,
-    tags: ['trending', 'international'],
-    createdAt: '2024-01-01',
-    updatedAt: '2024-01-01',
-  },
-  {
-    id: '4',
-    title: 'Dune',
-    description: 'Paul Atreides leads nomadic tribes in a revolt against the evil Harkonnen.',
-    thumbnail: '/images/dune-thumb.jpg',
-    backdrop: '/images/dune-backdrop.jpg',
-    videoUrl: '/videos/dune.mp4',
-    duration: 9360, // 2h 36m
-    releaseDate: '2021-10-22',
-    rating: 8.0,
-    maturityRating: 'PG-13',
-    genre: ['Sci-Fi', 'Adventure'],
-    cast: [],
-    director: ['Denis Villeneuve'],
-    producer: ['Mary Parent'],
-    language: 'English',
-    subtitles: [],
-    audioTracks: [],
-    qualityLevels: [],
-    type: 'movie',
-    isExclusive: false,
-    isPremium: true,
-    tags: ['blockbuster', 'sci-fi'],
-    createdAt: '2024-01-01',
-    updatedAt: '2024-01-01',
-  },
-  // Add more mock content...
-]
+import { mapDbItemToVideoContent, extractItemsFromApiResponse } from '@/lib/content-mapper'
 
 export function FeaturedContent() {
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const itemsPerView = 4
-  const maxIndex = Math.max(0, mockFeaturedContent.length - itemsPerView)
+  const [featuredList, setFeaturedList] = useState<VideoContent[]>([])
+  const [loading, setLoading] = useState(true)
+  const rowRef = useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(true)
 
-  const nextSlide = () => {
-    setCurrentIndex((prev) => Math.min(prev + 1, maxIndex))
+  useEffect(() => {
+    const fetchFeatured = async () => {
+      try {
+        setLoading(true)
+        const res = await fetch('/api/content/featured', { credentials: 'include' })
+        if (res.ok) {
+          const data = await res.json()
+          const items = extractItemsFromApiResponse(data)
+          if (items.length > 0) {
+            setFeaturedList(items.map(mapDbItemToVideoContent))
+            return
+          }
+        }
+
+        // Fallback to top rating items if no isFeatured flag
+        const topRes = await fetch('/api/content?limit=8', { credentials: 'include' })
+        if (topRes.ok) {
+          const data = await topRes.json()
+          const items = extractItemsFromApiResponse(data)
+          setFeaturedList(items.map(mapDbItemToVideoContent))
+        }
+      } catch (err) {
+        console.error('Failed to load featured content from database:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchFeatured()
+  }, [])
+
+  const checkScroll = () => {
+    if (rowRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = rowRef.current
+      setCanScrollLeft(scrollLeft > 10)
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10)
+    }
   }
 
-  const prevSlide = () => {
-    setCurrentIndex((prev) => Math.max(prev - 1, 0))
+  useEffect(() => {
+    checkScroll()
+    const handleResize = () => checkScroll()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [featuredList.length])
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (rowRef.current) {
+      const scrollAmount = rowRef.current.clientWidth * 0.75
+      rowRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth',
+      })
+      setTimeout(checkScroll, 350)
+    }
+  }
+
+  if (!loading && featuredList.length === 0) {
+    return null
   }
 
   return (
-    <section className="py-12 bg-netflix-black">
+    <section className="py-10 md:py-14 bg-netflix-black border-b border-gray-800/60 relative z-10">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl md:text-3xl font-bold text-white">
-            Featured Content
-          </h2>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-netflix-red" />
+              <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
+                Featured Content
+              </h2>
+            </div>
+            <p className="text-gray-400 text-xs sm:text-sm mt-0.5">
+              Specially curated blockbusters and series from our live catalog
+            </p>
+          </div>
           
-          <div className="flex items-center space-x-2">
+          <div className="hidden sm:flex items-center space-x-2">
             <Button
               variant="ghost"
               size="icon"
-              onClick={prevSlide}
-              disabled={currentIndex === 0}
-              className="text-white hover:bg-white/10 disabled:opacity-50"
+              onClick={() => scroll('left')}
+              disabled={!canScrollLeft}
+              aria-label="Scroll featured content left"
+              className="text-white hover:bg-white/10 rounded-full h-8 w-8 disabled:opacity-30 disabled:pointer-events-none"
             >
               <ChevronLeft className="h-5 w-5" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              onClick={nextSlide}
-              disabled={currentIndex >= maxIndex}
-              className="text-white hover:bg-white/10 disabled:opacity-50"
+              onClick={() => scroll('right')}
+              disabled={!canScrollRight}
+              aria-label="Scroll featured content right"
+              className="text-white hover:bg-white/10 rounded-full h-8 w-8 disabled:opacity-30 disabled:pointer-events-none"
             >
               <ChevronRight className="h-5 w-5" />
             </Button>
           </div>
         </div>
 
-        {/* Content Carousel */}
-        <div className="relative overflow-hidden">
-          <div
-            className="flex transition-transform duration-300 ease-in-out"
-            style={{
-              transform: `translateX(-${currentIndex * (100 / itemsPerView)}%)`,
-            }}
-          >
-            {mockFeaturedContent.map((content) => (
-              <div
-                key={content.id}
-                className="flex-shrink-0 w-full sm:w-1/2 md:w-1/3 lg:w-1/4 px-2"
-              >
-                <ContentCard content={content} />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Indicators */}
-        <div className="flex justify-center mt-6 space-x-2">
-          {Array.from({ length: maxIndex + 1 }).map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentIndex(index)}
-              className={`w-2 h-2 rounded-full transition-colors ${
-                index === currentIndex ? 'bg-netflix-red' : 'bg-gray-600'
-              }`}
-            />
-          ))}
+        {/* Content Carousel with native touch swiping & zero inline styles */}
+        <div className="relative">
+          {loading ? (
+            <div className="flex gap-4 overflow-hidden py-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="w-[260px] sm:w-[300px] md:w-[340px] aspect-video bg-gray-900 rounded-xl animate-pulse border border-gray-800 shrink-0"
+                />
+              ))}
+            </div>
+          ) : (
+            <div
+              ref={rowRef}
+              onScroll={checkScroll}
+              className="carousel-track scrollbar-none"
+            >
+              {featuredList.map((content) => (
+                <div
+                  key={content.id}
+                  className="carousel-slide w-[260px] sm:w-[300px] md:w-[340px]"
+                >
+                  <ContentCard content={content} size="large" />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>

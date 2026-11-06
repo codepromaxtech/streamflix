@@ -7,6 +7,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { BullModule } from '@nestjs/bull';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ElasticsearchModule } from '@nestjs/elasticsearch';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { join } from 'path';
 import * as redisStore from 'cache-manager-redis-store';
 
@@ -21,8 +22,10 @@ import { SubscriptionModule } from './subscription/subscription.module';
 import { AdminModule } from './admin/admin.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { SearchModule } from './search/search.module';
-import { NotificationModule } from './notification/notification.module';
-import { UploadModule } from './upload/upload.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { WebSocketModule } from './websocket/websocket.module';
+import { AppResolver } from './app.resolver';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -31,7 +34,10 @@ import { UploadModule } from './upload/upload.module';
       isGlobal: true,
       envFilePath: '../.env.local',
     }),
-    
+
+    // Event Emitter
+    EventEmitterModule.forRoot(),
+
     // GraphQL
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
@@ -41,38 +47,40 @@ import { UploadModule } from './upload/upload.module';
       introspection: true,
       context: ({ req }) => ({ req }),
     }),
-    
+
     // Rate limiting
-    ThrottlerModule.forRoot([{
-      ttl: 60000, // 1 minute
-      limit: 100, // 100 requests per minute
-    }]),
-    
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // 1 minute
+        limit: 100, // 100 requests per minute
+      },
+    ]),
+
     // Redis Cache
     CacheModule.register({
       isGlobal: true,
-      store: redisStore,
+      store: redisStore as any,
       host: process.env.REDIS_HOST || 'localhost',
-      port: parseInt(process.env.REDIS_PORT) || 6379,
+      port: parseInt(process.env.REDIS_PORT || '6379'),
       ttl: 300, // 5 minutes default TTL
     }),
-    
+
     // Bull Queue
     BullModule.forRoot({
       redis: {
         host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT) || 6379,
+        port: parseInt(process.env.REDIS_PORT || '6379'),
       },
     }),
-    
+
     // Task Scheduling
     ScheduleModule.forRoot(),
-    
+
     // Elasticsearch
     ElasticsearchModule.register({
       node: process.env.ELASTICSEARCH_URL || 'http://localhost:9200',
     }),
-    
+
     // Application modules
     PrismaModule,
     AuthModule,
@@ -84,8 +92,10 @@ import { UploadModule } from './upload/upload.module';
     AdminModule,
     AnalyticsModule,
     SearchModule,
-    NotificationModule,
-    UploadModule,
+    NotificationsModule,
+    WebSocketModule,
   ],
+  controllers: [AppController],
+  providers: [AppResolver],
 })
 export class AppModule {}

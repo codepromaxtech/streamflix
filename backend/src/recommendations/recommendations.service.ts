@@ -1,7 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
-import * as tf from '@tensorflow/tfjs-node';
+
+let tf: any = null;
+try {
+  tf = require('@tensorflow/tfjs-node');
+} catch {
+  tf = null;
+}
 
 interface UserPreferences {
   genres: string[];
@@ -36,7 +42,7 @@ interface RecommendationScore {
 @Injectable()
 export class RecommendationsService {
   private readonly logger = new Logger(RecommendationsService.name);
-  private model: tf.LayersModel | null = null;
+  private model: any = null;
   private isModelLoaded = false;
 
   constructor(
@@ -298,8 +304,8 @@ export class RecommendationsService {
       }
       
       // Count actors
-      if (content.cast) {
-        content.cast.split(',').slice(0, 3).forEach(actor => {
+      if ((content as any).cast && typeof (content as any).cast === 'string') {
+        ((content as any).cast as string).split(',').slice(0, 3).forEach(actor => {
           actorCount[actor.trim()] = (actorCount[actor.trim()] || 0) + 1;
         });
       }

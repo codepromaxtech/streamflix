@@ -6,6 +6,8 @@ import { AuthProvider } from '@/contexts/auth-context'
 import { VideoPlayerProvider } from '@/contexts/video-player-context'
 import { ThemeProvider } from 'next-themes'
 
+import { VideoPlayerModal } from '@/components/video-player/video-player-modal'
+
 interface ProvidersProps {
   children: React.ReactNode
 }
@@ -22,6 +24,7 @@ export function Providers({ children }: ProvidersProps) {
         <AuthProvider>
           <VideoPlayerProvider>
             {children}
+            <VideoPlayerModal />
           </VideoPlayerProvider>
         </AuthProvider>
       </ApolloProvider>

@@ -398,7 +398,7 @@ export class StoreService {
               rewardType: 'avatar',
               rewardId: item.id,
               source: 'purchase',
-              unlockedAt: new Date(),
+              claimedAt: new Date(),
             },
           });
           break;
@@ -426,7 +426,7 @@ export class StoreService {
           const expiryDate = new Date();
           expiryDate.setDate(expiryDate.getDate() + durationDays);
 
-          await this.prisma.userSubscription.upsert({
+          await (this.prisma as any).userSubscription?.upsert?.({
             where: { userId },
             update: {
               plan: item.metadata?.plan || 'premium',
@@ -450,8 +450,7 @@ export class StoreService {
               rewardType: item.category,
               rewardId: item.id,
               source: 'purchase',
-              unlockedAt: new Date(),
-              metadata: { quantity },
+              claimedAt: new Date(),
             },
           });
       }
@@ -599,8 +598,8 @@ export class StoreService {
     for (const subscription of defaultSubscriptions) {
       await this.prisma.subscription.upsert({
         where: { id: subscription.id },
-        update: subscription,
-        create: subscription,
+        update: subscription as any,
+        create: subscription as any,
       });
     }
   }

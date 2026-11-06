@@ -1,10 +1,16 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { Providers } from '@/components/providers'
 import { Toaster } from '@/components/ui/toaster'
 
 const inter = Inter({ subsets: ['latin'] })
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#141414',
+}
 
 export const metadata: Metadata = {
   title: 'StreamFlix - Premium Streaming Platform',
@@ -22,7 +28,6 @@ export const metadata: Metadata = {
     title: 'StreamFlix - Premium Streaming Platform',
     description: 'Watch unlimited movies, TV shows, and exclusive content',
   },
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
   robots: 'index, follow',
 }
 
