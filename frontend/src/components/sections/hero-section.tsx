@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { Play, Info, Volume2, VolumeX, Sparkles } from 'lucide-react'
+import { Play, Info, Volume2, VolumeX, Sparkles, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useVideoPlayer } from '@/contexts/video-player-context'
 import { VideoContent } from '@/types/video'
@@ -166,6 +166,20 @@ export function HeroSection() {
                 <Info className="h-5 w-5" />
                 <span>Watch Trailer</span>
               </Button>
+
+              {content.videoUrl && (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  asChild
+                  className="border-emerald-500/50 bg-emerald-950/70 hover:bg-emerald-900/80 text-emerald-300 hover:text-white flex items-center space-x-2 shadow-lg shadow-emerald-950/40"
+                >
+                  <a href={content.videoUrl} download title="Download Torrent (Magnet / File)">
+                    <Download className="h-5 w-5 text-emerald-400" />
+                    <span>Download Torrent</span>
+                  </a>
+                </Button>
+              )}
 
               {/* Mute/Unmute Button */}
               {isTrailerPlaying && (

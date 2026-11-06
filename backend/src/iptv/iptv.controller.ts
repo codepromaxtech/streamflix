@@ -23,6 +23,7 @@ export class IptvController {
     @Query('search') search?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('all') all?: string,
   ) {
     return this.iptvService.getChannels({
       country,
@@ -31,6 +32,7 @@ export class IptvController {
       search,
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 100,
+      all,
     });
   }
 
@@ -45,8 +47,26 @@ export class IptvController {
   }
 
   @Get('peering-nodes')
-  getPeeringNodes() {
-    return this.iptvService.getPeeringNodes();
+  getPeeringNodes(@Query('all') all?: string) {
+    return this.iptvService.getPeeringNodes(all === 'true');
+  }
+
+  @Post('peering-nodes')
+  createPeeringNode(@Body() data: any) {
+    if (!data.name || !data.region) {
+      throw new BadRequestException('Name and region are required for peering node');
+    }
+    return this.iptvService.createPeeringNode(data);
+  }
+
+  @Put('peering-nodes/:id')
+  updatePeeringNode(@Param('id') id: string, @Body() data: any) {
+    return this.iptvService.updatePeeringNode(id, data);
+  }
+
+  @Delete('peering-nodes/:id')
+  deletePeeringNode(@Param('id') id: string) {
+    return this.iptvService.deletePeeringNode(id);
   }
 
   @Get('channels/:id')

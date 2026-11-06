@@ -495,6 +495,31 @@ export class AdminService {
     });
   }
 
+  async updateContent(id: string, data: any) {
+    const item = await this.prisma.content.findUnique({ where: { id } });
+    if (!item) throw new NotFoundException('Content not found in database');
+
+    return this.prisma.content.update({
+      where: { id },
+      data: {
+        title: data.title !== undefined ? data.title : item.title,
+        description: data.description !== undefined ? data.description : item.description,
+        videoUrl: data.videoUrl !== undefined ? data.videoUrl : item.videoUrl,
+        thumbnail: data.thumbnail !== undefined ? data.thumbnail : item.thumbnail,
+        backdrop: data.backdrop !== undefined ? data.backdrop : item.backdrop,
+        trailer: data.trailer !== undefined ? data.trailer : item.trailer,
+        rating: data.rating !== undefined ? Number(data.rating) : item.rating,
+        duration: data.duration !== undefined ? Number(data.duration) : item.duration,
+        type: data.type !== undefined ? data.type : item.type,
+        genre: data.genre !== undefined ? data.genre : item.genre,
+        maturityRating: data.maturityRating !== undefined ? data.maturityRating : item.maturityRating,
+        isPublished: data.isPublished !== undefined ? Boolean(data.isPublished) : item.isPublished,
+        isFeatured: data.isFeatured !== undefined ? Boolean(data.isFeatured) : item.isFeatured,
+        isTrending: data.isTrending !== undefined ? Boolean(data.isTrending) : item.isTrending,
+      },
+    });
+  }
+
   // --- Scraper & Ingestion Management (100% Dynamic from PostgreSQL) ---
 
   async getScraperStatus() {

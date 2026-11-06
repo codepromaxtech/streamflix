@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Put,
   Patch,
   Delete,
   Query,
@@ -74,6 +75,22 @@ export class AdminController {
   @Delete('content/:id')
   async deleteContent(@Param('id') id: string) {
     return this.adminService.deleteContent(id);
+  }
+
+  @Put('content/:id')
+  async updateContent(
+    @Param('id') id: string,
+    @Body() data: any,
+  ) {
+    return this.adminService.updateContent(id, data);
+  }
+
+  @Patch('content/:id')
+  async patchContent(
+    @Param('id') id: string,
+    @Body() data: any,
+  ) {
+    return this.adminService.updateContent(id, data);
   }
 
   // --- Scraper / Ingestion Management Endpoints ---

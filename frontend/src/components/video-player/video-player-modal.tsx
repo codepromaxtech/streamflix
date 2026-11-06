@@ -1,13 +1,33 @@
 'use client'
 
-import React, { useEffect } from 'react'
-import { X } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
+import { X, Download, Check } from 'lucide-react'
 import { useVideoPlayer } from '@/contexts/video-player-context'
 import { ShakaPlayer } from './shaka-player'
 import { Button } from '@/components/ui/button'
 
 export function VideoPlayerModal() {
   const { currentVideo, stopVideo } = useVideoPlayer()
+  const [copied, setCopied] = useState(false)
+
+  const handleDownload = () => {
+    if (!currentVideo?.videoUrl) return
+
+    if (currentVideo.videoUrl.startsWith('magnet:')) {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        navigator.clipboard.writeText(currentVideo.videoUrl).catch(() => {})
+      }
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
+    }
+
+    const a = document.createElement('a')
+    a.href = currentVideo.videoUrl
+    a.download = `${currentVideo.title.replace(/[^a-zA-Z0-9]/g, '_')}.torrent`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+  }
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -44,15 +64,43 @@ export function VideoPlayerModal() {
           <h2 className="text-white font-semibold text-sm md:text-base line-clamp-1">{currentVideo.title}</h2>
         </div>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={stopVideo}
-          className="rounded-full bg-black/60 hover:bg-white/20 text-white border border-white/20 h-10 w-10 transition-transform hover:scale-105"
-        >
-          <X className="h-5 w-5" />
-          <span className="sr-only">Close Player</span>
-        </Button>
+        <div className="flex items-center space-x-2">
+          {currentVideo.videoUrl && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownload}
+              className={`h-9 px-3 text-xs font-semibold rounded-lg border transition-all ${
+                copied
+                  ? 'bg-emerald-950 border-emerald-400 text-emerald-300'
+                  : 'bg-emerald-950/80 hover:bg-emerald-900 border-emerald-500/50 text-emerald-300 hover:text-white shadow-lg shadow-emerald-950/50'
+              }`}
+              title={copied ? 'Magnet URI Copied to Clipboard!' : 'Download Torrent / Magnet'}
+            >
+              {copied ? (
+                <>
+                  <Check className="h-4 w-4 mr-1.5 text-emerald-400" />
+                  Copied Magnet
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4 mr-1.5 text-emerald-400" />
+                  Download Torrent
+                </>
+              )}
+            </Button>
+          )}
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={stopVideo}
+            className="rounded-full bg-black/60 hover:bg-white/20 text-white border border-white/20 h-10 w-10 transition-transform hover:scale-105"
+          >
+            <X className="h-5 w-5" />
+            <span className="sr-only">Close Player</span>
+          </Button>
+        </div>
       </div>
 
       {/* Main Video Viewport */}

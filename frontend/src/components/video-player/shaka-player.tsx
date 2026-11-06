@@ -598,6 +598,20 @@ export function ShakaPlayer({
 
         {magnetUri && (
           <Button
+            variant="outline"
+            size="sm"
+            asChild
+            className="h-8 text-xs font-semibold bg-emerald-950/80 border-emerald-500/50 text-emerald-300 hover:bg-emerald-900 hover:text-white shadow-md shadow-emerald-950/50"
+          >
+            <a href={magnetUri} download title="Download Torrent / Open in BitTorrent Client">
+              <Download className="h-3.5 w-3.5 mr-1.5 text-emerald-400" />
+              Download Torrent
+            </a>
+          </Button>
+        )}
+
+        {magnetUri && (
+          <Button
             variant="ghost"
             size="sm"
             asChild
@@ -605,7 +619,7 @@ export function ShakaPlayer({
           >
             <a href={magnetUri} title="Launch in VLC / External Player">
               <ExternalLink className="h-3.5 w-3.5 mr-1.5 text-purple-400" />
-              Launch in VLC
+              VLC / Stremio
             </a>
           </Button>
         )}

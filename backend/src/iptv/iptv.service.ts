@@ -20,12 +20,16 @@ export class IptvService {
     search?: string;
     page?: number;
     limit?: number;
+    all?: boolean | string;
   }) {
     const page = Math.max(Number(filters.page) || 1, 1);
     const limit = Math.min(Number(filters.limit) || 100, 200);
     const skip = (page - 1) * limit;
 
-    const where: any = { isActive: true };
+    const where: any = {};
+    if (filters.all !== true && filters.all !== 'true') {
+      where.isActive = true;
+    }
 
     if (filters.country && filters.country !== 'ALL') {
       where.OR = [
@@ -129,11 +133,45 @@ export class IptvService {
   }
 
   // 5. Fetch Peering Nodes Dynamically from DB
-  async getPeeringNodes() {
+  async getPeeringNodes(all = false) {
+    const where = all ? {} : { isActive: true };
     return this.db.peeringNode.findMany({
-      where: { isActive: true },
+      where,
       orderBy: { latencyMs: 'asc' },
     });
+  }
+
+  async createPeeringNode(data: any) {
+    return this.db.peeringNode.create({
+      data: {
+        name: data.name,
+        region: data.region,
+        countryCode: (data.countryCode || 'GLOBAL').toUpperCase(),
+        latencyMs: Number(data.latencyMs) || 10,
+        status: data.status || 'ONLINE',
+        description: data.description || '',
+        isActive: data.isActive !== undefined ? Boolean(data.isActive) : true,
+      },
+    });
+  }
+
+  async updatePeeringNode(id: string, data: any) {
+    return this.db.peeringNode.update({
+      where: { id },
+      data: {
+        ...(data.name && { name: data.name }),
+        ...(data.region && { region: data.region }),
+        ...(data.countryCode && { countryCode: data.countryCode.toUpperCase() }),
+        ...(data.latencyMs !== undefined && { latencyMs: Number(data.latencyMs) }),
+        ...(data.status && { status: data.status }),
+        ...(data.description !== undefined && { description: data.description }),
+        ...(data.isActive !== undefined && { isActive: Boolean(data.isActive) }),
+      },
+    });
+  }
+
+  async deletePeeringNode(id: string) {
+    return this.db.peeringNode.delete({ where: { id } });
   }
 
   // 6. Channel Management (CRUD) in Database

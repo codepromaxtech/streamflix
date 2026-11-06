@@ -18,7 +18,8 @@ import {
   Radio,
   RefreshCw,
   X,
-  CheckCircle2
+  CheckCircle2,
+  Tv
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -29,6 +30,7 @@ import { ContentTable } from '@/components/admin/content-table'
 import { UserTable } from '@/components/admin/user-table'
 import { RecentActivity } from '@/components/admin/recent-activity'
 import { ScraperManager } from '@/components/admin/scraper-manager'
+import { IptvTable } from '@/components/admin/iptv-table'
 
 export default function AdminDashboard() {
   const [mounted, setMounted] = useState(false)
@@ -287,6 +289,14 @@ export default function AdminDashboard() {
                   <Button 
                     className="w-full justify-start text-white hover:bg-gray-700" 
                     variant="ghost"
+                    onClick={() => setActiveTab('iptv')}
+                  >
+                    <Tv className="h-4 w-4 mr-2 text-netflix-red" />
+                    Live IPTV & BDIX Channels
+                  </Button>
+                  <Button 
+                    className="w-full justify-start text-white hover:bg-gray-700" 
+                    variant="ghost"
                     onClick={() => setActiveTab('scraping')}
                   >
                     <Radio className="h-4 w-4 mr-2 text-emerald-400" />
@@ -313,6 +323,9 @@ export default function AdminDashboard() {
             </div>
           </div>
         )
+
+      case 'iptv':
+        return <IptvTable />
 
       case 'scraping':
         return <ScraperManager />

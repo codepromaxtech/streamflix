@@ -12,6 +12,7 @@ import {
   Upload,
   Bell,
   Radio,
+  Tv,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -32,8 +33,13 @@ const menuItems = [
   },
   {
     id: 'content',
-    label: 'Content',
+    label: 'Content Catalog',
     icon: Video,
+  },
+  {
+    id: 'iptv',
+    label: 'Live IPTV & BDIX',
+    icon: Tv,
   },
   {
     id: 'scraping',

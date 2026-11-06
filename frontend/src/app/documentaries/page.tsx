@@ -12,7 +12,8 @@ import {
   ArrowUpDown,
   RefreshCw,
   Info,
-  AlertCircle
+  AlertCircle,
+  Download
 } from 'lucide-react'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
@@ -149,7 +150,7 @@ export default function DocumentariesPage() {
                   {featuredDoc.description}
                 </p>
 
-                <div className="flex items-center gap-3 pt-2">
+                <div className="flex flex-wrap items-center gap-3 pt-2">
                   <Button
                     onClick={() => playVideo(featuredDoc)}
                     className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-2.5 h-11 rounded-lg flex items-center gap-2 shadow-lg shadow-emerald-950/40 transition-transform active:scale-95"
@@ -157,6 +158,18 @@ export default function DocumentariesPage() {
                     <Play className="h-4 w-4 fill-white" />
                     Watch Documentary
                   </Button>
+                  {featuredDoc.videoUrl && (
+                    <Button
+                      variant="outline"
+                      asChild
+                      className="border-emerald-500/50 bg-emerald-950/70 hover:bg-emerald-900 text-emerald-300 hover:text-white h-11 px-5 rounded-lg flex items-center gap-2 shadow-lg shadow-emerald-950/40"
+                    >
+                      <a href={featuredDoc.videoUrl} download title="Download Torrent (Magnet / File)">
+                        <Download className="h-4 w-4 text-emerald-400" />
+                        <span>Download Torrent</span>
+                      </a>
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     onClick={() => playVideo(featuredDoc)}

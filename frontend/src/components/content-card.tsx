@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { Play, Plus, ThumbsUp, Info } from 'lucide-react'
+import { Play, Plus, ThumbsUp, Info, Download, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { VideoContent } from '@/types/video'
 import { useVideoPlayer } from '@/contexts/video-player-context'
@@ -18,10 +18,34 @@ export function ContentCard({ content, size = 'medium' }: ContentCardProps) {
   const [imgSrc, setImgSrc] = useState(
     content.thumbnail || '/placeholder-poster.svg'
   )
+  const [downloadCopied, setDownloadCopied] = useState(false)
 
   const handlePlay = (e: React.MouseEvent) => {
     e.stopPropagation()
     playVideo(content)
+  }
+
+  const handleDownloadTorrent = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    const targetUrl = content.videoUrl
+    if (!targetUrl) return
+
+    // If magnet URI, copy to clipboard for user convenience and notify
+    if (targetUrl.startsWith('magnet:')) {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        navigator.clipboard.writeText(targetUrl).catch(() => {})
+      }
+      setDownloadCopied(true)
+      setTimeout(() => setDownloadCopied(false), 2500)
+    }
+
+    // Direct window trigger for BitTorrent / external clients / direct downloads
+    const a = document.createElement('a')
+    a.href = targetUrl
+    a.download = `${content.title.replace(/[^a-zA-Z0-9]/g, '_')}.torrent`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
   }
 
   return (
@@ -63,6 +87,28 @@ export function ContentCard({ content, size = 'medium' }: ContentCardProps) {
             </span>
           )}
         </div>
+
+        {/* Download Torrent Quick Action Badge on Thumbnail */}
+        {content.videoUrl && (
+          <button
+            type="button"
+            onClick={handleDownloadTorrent}
+            title={downloadCopied ? 'Magnet URI Copied to Clipboard!' : 'Download Torrent / Magnet'}
+            className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1 bg-black/80 hover:bg-emerald-600 text-gray-200 hover:text-white px-2 py-1 rounded-md text-[10px] font-semibold border border-white/20 backdrop-blur-md shadow-md transition-all duration-200 group/dl cursor-pointer"
+          >
+            {downloadCopied ? (
+              <>
+                <Check className="h-3 w-3 text-emerald-400" />
+                <span className="text-emerald-300 font-bold">Copied!</span>
+              </>
+            ) : (
+              <>
+                <Download className="h-3 w-3 text-emerald-400 group-hover/dl:text-white transition-colors" />
+                <span className="hidden sm:inline">Torrent</span>
+              </>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Card Body - Contained details that never overlap other sections */}
@@ -108,15 +154,37 @@ export function ContentCard({ content, size = 'medium' }: ContentCardProps) {
               size="icon"
               onClick={handlePlay}
               aria-label={`Play ${content.title}`}
+              title="Play Now"
               className="bg-white text-black hover:bg-gray-200 rounded-full w-7 h-7"
             >
               <Play className="h-3.5 w-3.5 fill-current ml-0.5" />
             </Button>
+            {content.videoUrl && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleDownloadTorrent}
+                aria-label={`Download Torrent for ${content.title}`}
+                title={downloadCopied ? 'Magnet URI Copied!' : 'Download Torrent / Magnet'}
+                className={`rounded-full w-7 h-7 border transition-all ${
+                  downloadCopied
+                    ? 'border-emerald-400 bg-emerald-950 text-emerald-300'
+                    : 'border-emerald-500/50 bg-emerald-950/40 text-emerald-400 hover:text-white hover:bg-emerald-600'
+                }`}
+              >
+                {downloadCopied ? (
+                  <Check className="h-3.5 w-3.5" />
+                ) : (
+                  <Download className="h-3.5 w-3.5" />
+                )}
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
               onClick={(e) => e.stopPropagation()}
               aria-label="Add to watchlist"
+              title="Add to Watchlist"
               className="border border-gray-700 text-gray-300 hover:text-white hover:border-gray-500 rounded-full w-7 h-7"
             >
               <Plus className="h-3.5 w-3.5" />
@@ -126,6 +194,7 @@ export function ContentCard({ content, size = 'medium' }: ContentCardProps) {
               size="icon"
               onClick={(e) => e.stopPropagation()}
               aria-label="Like content"
+              title="Like"
               className="border border-gray-700 text-gray-300 hover:text-white hover:border-gray-500 rounded-full w-7 h-7"
             >
               <ThumbsUp className="h-3.5 w-3.5" />
